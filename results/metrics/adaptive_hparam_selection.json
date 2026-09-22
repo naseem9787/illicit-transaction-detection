@@ -1,0 +1,57 @@
+{
+  "candidate_grid": [
+    {
+      "lr": 0.001,
+      "grad_steps": 1,
+      "feedback_delay_k": 1
+    },
+    {
+      "lr": 0.001,
+      "grad_steps": 3,
+      "feedback_delay_k": 1
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 1,
+      "feedback_delay_k": 1
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 3,
+      "feedback_delay_k": 1
+    }
+  ],
+  "selection_log": [
+    {
+      "lr": 0.001,
+      "grad_steps": 1,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.7600514829046345
+    },
+    {
+      "lr": 0.001,
+      "grad_steps": 3,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.7449065044881701
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 1,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.7189721442255782
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 3,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.7055052916829407
+    }
+  ],
+  "selected": {
+    "lr": 0.001,
+    "grad_steps": 1
+  },
+  "selection_criterion": "pooled PR-AUC over validation 30-34 predictions, k=1",
+  "replay": false,
+  "replay_note": "Not implemented in this experiment (see docs/EXPERIMENTS.md Phase 4)."
+}

@@ -300,3 +300,285 @@ three models overlaid), `results/figures/gcn_confusion_matrix.png`.
 `results/metrics/temporal_gcn.csv`. No Phase 1 or Phase 2 file was
 modified — Phase 2's `baseline_results.json` and prediction files are
 only read, never written, by the Phase 3 scripts.
+
+---
+
+## Phase 4 — Adaptive GCN (simulated delayed-feedback online adaptation)
+
+### Purpose and scope
+
+Tests whether **online weight adaptation** helps the existing Phase 3 GCN
+respond to the temporal regime shift the dataset already shows (the t=43
+collapse documented above). This experiment implements exactly one
+adaptive mechanism — Candidate C from the Phase 4 design review (online
+fine-tuning on revealed labels with a fixed feedback delay) — and nothing
+else. Per the design brief, this run deliberately excludes reinforcement
+learning, meta-learning, drift-statistics features, graph rewiring,
+EvolveGCN-style weight evolution, and any other adaptive mechanism; those
+remain candidates for future work, not part of this experiment.
+
+**The primary scientific comparison is Static GCN vs Adaptive GCN**, both
+on time steps 35–49. Logistic Regression and Random Forest appear in the
+summary figure only as secondary reference points.
+
+### The feedback-delay assumption is simulated, not a dataset fact
+
+This is the central methodological clarification for Phase 4, and it is
+restated here deliberately: **the Elliptic dataset does not establish
+that real-world labels become available one time step later.** The
+one-step (or three-step) delay used below is an explicit, documented
+experimental assumption:
+
+> After predicting time step t, labels for t are assumed to become
+> available before prediction at t+1 (k=1), or before prediction at t+3
+> for the k=3 sensitivity run.
+
+This is a simulation of a plausible investigative-lag scenario, not a
+property discovered in or guaranteed by the data. See `docs/LIMITATIONS.md`
+L2 for the full caveat — it applies to every result in this section.
+
+### Protocol
+
+Both models start from **exactly the same pretrained weights**
+(`results/models/gcn.pt`, unmodified Phase 3 checkpoint) — the only
+experimental variable is whether weights evolve during the 35–49 walk.
+
+**Static GCN**: pretrained on 1–29, frozen, predicts 35–49 (this is
+literally Phase 3's `gcn_test.npz`, reused read-only, not recomputed).
+
+**Adaptive GCN**, for `t = 35 … 49`, strictly in order:
+
+```
+prediction(t) → freeze/log prediction(t) → reveal labels(t)
+              → adaptation update (t's revealed labels only)
+              → prediction(t+1)
+```
+
+Implemented in `src/training/adaptive_gnn.py::run_adaptive_walk`. At each
+iteration, any earlier step's labels that are due to be revealed now (per
+the fixed delay k) are used for a small number of gradient steps
+*before* that iteration's own prediction is made; the prediction is then
+logged immediately and never revisited. This ordering guarantees, by
+construction, that no prediction ever uses labels from its own or any
+later time step — verified directly by the leakage tests in
+`tests/test_adaptive_gnn.py`, not just asserted by the code's intent.
+
+As an internal correctness check: since no adaptation has occurred before
+the very first prediction (t=35), Static and Adaptive GCN produce
+*bit-identical* predictions for t=35 — confirmed directly
+(`np.allclose(static_probs[t=35], adaptive_probs[t=35])` → `True`). This
+is strong evidence the protocol is wired correctly, not a coincidence.
+
+### Class imbalance handling in the adaptation loop
+
+The `BCEWithLogitsLoss` pos_weight used during adaptation is **fixed** at
+the value computed from the original training split (1–29 labeled nodes,
+pos_weight ≈ 8.19) — the same value used to pretrain the Static GCN in
+Phase 3. It is *not* recomputed per test time step. A single test
+snapshot's revealed labels can be extremely small and skewed (e.g. t=45
+has only a handful of illicit nodes among ~1,221 labeled), so a
+per-step-recomputed pos_weight would make individual adaptation updates
+numerically unstable; using the stable, train-derived value avoids that
+without touching any test-period information beyond what's already
+revealed.
+
+### Threshold
+
+**Reused from Phase 3, not re-selected.** The Static GCN's validation-only
+threshold (0.863, selected once on 30–34 in `scripts/evaluate_gnn.py`) is
+applied to both Static and Adaptive GCN predictions throughout the walk.
+This isolates online weight adaptation as the only variable between the
+two models — a second, independently-chosen threshold would have
+confounded the comparison. No threshold is ever selected using test data,
+for either model (`tests/test_adaptive_gnn.py::
+test_evaluate_adaptive_predictions_never_reselects_threshold` asserts
+this directly by monkeypatching `select_threshold_maximizing_f1` to raise
+if called).
+
+### Hyperparameter selection (validation 30–34 only)
+
+A small, pre-declared grid — chosen before running anything, given only 5
+validation time steps to select on:
+
+| lr | grad_steps | k | val pooled PR-AUC |
+|---:|---:|---:|---:|
+| 0.001 | 1 | 1 | 0.7601 |
+| 0.001 | 3 | 1 | 0.7449 |
+| 0.005 | 1 | 1 | 0.7190 |
+| 0.005 | 3 | 1 | 0.7055 |
+
+Selected: **lr=0.001, grad_steps=1** (highest pooled PR-AUC over
+validation 30–34). For each candidate, a *fresh* copy of the pretrained
+model is walked forward over validation with k=1
+(`src/training/adaptive_gnn.py::select_adaptation_config`) — candidates
+never contaminate each other, and the adapted weights produced during
+this search are discarded; only the winning (lr, grad_steps) pair
+survives into the actual test-period run, which restarts from the
+unmodified pretrained checkpoint.
+
+Worth stating plainly: **every candidate's validation pooled PR-AUC
+(0.706–0.760) is below the Static GCN's own validation PR-AUC (0.7707,
+from Phase 3)**. Adaptation did not help on the validation walk itself —
+this is reported honestly because it directly informed how the test-set
+result below should be read (see "Interpretation").
+
+**Statistical power caveat**: this selection is based on only **5
+validation time steps** (30–34). With that few points and four candidates
+this close together (0.7601 vs 0.7449 vs 0.7190 vs 0.7055), the selection
+carries real variance — a different validation slice could plausibly have
+picked a different winner. This is a genuine limitation of the available
+validation period, not a flaw in the selection procedure itself (which is
+otherwise leakage-safe — see the Phase 4 audit), and should be kept in
+mind when weighing how much to read into the specific (lr, grad_steps)
+pair chosen.
+
+**Replay**: not implemented in this experiment. Each adaptation update
+trains on exactly the one revealed snapshot's labeled nodes — no replay
+buffer from 1–29 is mixed in. This was a deliberate scope decision (the
+design brief explicitly permits deferring replay if it adds significant
+complexity): correctly batching a fixed set of replay snapshots alongside
+the revealed test snapshot, without merging their graphs via message
+passing, is nontrivial to get right, and skipping it keeps the first
+adaptive experiment's one variable (does weight adaptation itself help)
+uncontaminated by a second one (does replay change the answer). This is a
+documented limitation, not an oversight — a natural next experiment.
+
+**Optimizer state note**: the Adam optimizer is instantiated once per walk
+(`src/training/adaptive_gnn.py::run_adaptive_walk`) and its momentum/
+variance state persists and compounds across all sequential adaptation
+events within that walk — it is never reset between events. This means
+`grad_steps=1` is **not** equivalent to an independent, fixed-size update
+applied identically at every event; the effective step taken at, say,
+t=49's adaptation reflects Adam's accumulated history from all 13 prior
+adaptation events in the same walk, not just that one event's gradient in
+isolation. This is not a leakage concern (the accumulated state is purely
+a function of past, causally-legitimate gradients — see the Phase 4 audit),
+but it is a real interpretive caveat on what "1 gradient step" means here.
+
+Full configuration:
+
+| setting | value |
+|---|---|
+| learning rate | 0.001 |
+| gradient steps per update | 1 |
+| feedback delay k (primary) | 1 |
+| feedback delay k (sensitivity) | 3 |
+| replay | not used |
+| pos_weight | 8.1888 (fixed, from train 1–29) |
+| seed | 42 |
+| base checkpoint | `results/models/gcn.pt` (Phase 3, unmodified) |
+
+### Results — TEST set (time steps 35–49), shared frozen threshold
+
+| Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+|---|---:|---:|---:|---:|---:|
+| Static GCN | 0.306 | 0.536 | 0.390 | 0.808 | 0.265 |
+| **Adaptive GCN (k=1)** | 0.389 | 0.529 | **0.448** | 0.829 | 0.310 |
+
+Static GCN confusion matrix: TN=14272, FP=1315, FN=502, TP=581.
+Adaptive GCN confusion matrix: TN=14687, FP=900, FN=510, TP=573.
+
+Secondary reference (unchanged from Phase 2/3, not the comparison this
+experiment is about): Logistic Regression F1=0.323, Random Forest
+F1=0.790.
+
+### Interpretation — where the improvement comes from, and where it doesn't
+
+The Adaptive GCN does beat the Static GCN in the pooled test-set numbers
+above (F1 +0.058, PR-AUC +0.045, ROC-AUC +0.021), and this improvement is
+real, not an artifact — but the per-time-step breakdown
+(`results/metrics/temporal_static_vs_adaptive_f1_delta.csv`) shows it is
+**not evenly distributed**, and specifically does **not** answer "does
+adaptation help the model recover from the t=43 regime shift" the way one
+might hope:
+
+| period | mean F1 delta (Adaptive − Static) |
+|---|---:|
+| t=35–42 (before the collapse) | **+0.058** |
+| t=43–49 (collapse region) | **−0.001** (essentially zero) |
+
+- **t=35**: F1 delta is exactly 0 — Static and Adaptive are bit-identical
+  here by construction (no adaptation has happened yet). This is the
+  internal correctness check mentioned above, not a result.
+- **t=36–42**: consistent, meaningful positive deltas (+0.01 to +0.13 F1),
+  peaking at t=38 (+0.126). The adaptive model genuinely tracks the
+  still-"normal" regime better than the frozen static model here.
+- **t=43–45**: both models collapse to near-zero F1 together
+  (delta ≈ 0) — adaptation does not rescue the model from the regime
+  shift; it fails the same way the static model does.
+- **t=46–49**: mixed, small in magnitude (+0.038, **−0.049**, 0, 0) — no
+  consistent direction, most plausibly noise given how few labeled
+  illicit examples exist in this region (as low as ~0.3–2.6% illicit
+  rate per step here).
+
+**Honest conclusion**: online weight adaptation, in this minimal form,
+improves overall test performance, but the improvement is concentrated in
+the pre-collapse period, not in the exact regime-shift region (t≥43) that
+motivated the Phase 4 research question in the first place. This is a
+genuine, useful finding — it does **not** demonstrate that this adaptive
+mechanism solves the problem it was aimed at, and this report does not
+claim that it does. It's the honest floor for what one-step, no-replay
+online fine-tuning achieves here.
+
+### Sensitivity check: k=3 (secondary, not used for any selection)
+
+Same selected hyperparameters (lr=0.001, grad_steps=1), only the feedback
+delay changed to k=3, run once and reported as-is — **not** compared
+against k=1 to pick a "better" delay, per the design brief:
+
+| Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+|---|---:|---:|---:|---:|---:|
+| Adaptive GCN (k=3) | 0.365 | 0.534 | 0.434 | 0.823 | 0.294 |
+
+k=3 sits between Static and k=1 on every metric. Consistent with k=1's
+finding (adaptation helps, moderately, somewhere between "not at all" and
+"a lot"), not a contradiction, but reported strictly as a secondary data
+point.
+
+### Leakage verification
+
+Six automated tests in `tests/test_adaptive_gnn.py`, run against
+synthetic sequential snapshots for exact, hand-checkable expected
+behavior:
+
+1. `test_prediction_precedes_its_own_adaptation` — prediction(t) is
+   logged strictly before any adaptation event that uses t's own labels.
+2. `test_adaptation_never_uses_future_labels` — every adaptation event's
+   source time step equals `applied_at − k` (< applied_at) for k ∈ {1,2,3}.
+3. `test_evaluate_adaptive_predictions_never_reselects_threshold` —
+   `select_threshold_maximizing_f1` is asserted (via monkeypatch) to
+   never be called during test-period evaluation.
+4. `test_predictions_are_deterministic_and_not_mutated_afterward` — two
+   independent runs with the same seed produce byte-identical logged
+   predictions; each time step's dict entry is assigned exactly once.
+5. `test_adaptation_uses_only_the_single_revealed_snapshot` — spies on
+   the loss function's input shape during every adaptation step and
+   confirms it equals exactly the one revealed snapshot's labeled node
+   count (nothing else, e.g. a would-be replay buffer, is mixed in).
+6. `test_chronological_order_preserved` — predictions are produced in
+   exactly the given chronological order, no skips or reordering.
+
+Plus `test_replay_true_is_rejected` (replay=True raises `NotImplementedError`
+rather than silently doing nothing) and two config-selection sanity tests.
+
+### Figures
+
+`results/figures/adaptive_vs_static_comparison.png` (Static vs Adaptive
+primary comparison, RF/LogReg as secondary reference bars),
+`per_time_step_f1_static_vs_adaptive.png`, `f1_delta_over_time.png`
+(highlights the t=43 boundary), `pr_roc_curves_adaptive_vs_static.png`,
+`adaptive_vs_static_confusion_matrices.png`.
+
+### Files
+
+`src/training/adaptive_gnn.py`, `scripts/train_adaptive_gnn.py`,
+`scripts/evaluate_adaptive_gnn.py`, `tests/test_adaptive_gnn.py`.
+Outputs: `results/metrics/adaptive_hparam_selection.json`,
+`results/metrics/adaptive_train_manifest.json`,
+`results/metrics/adaptive_results.json`,
+`results/metrics/predictions/adaptive_gcn_test{,_k3}.npz`,
+`results/metrics/temporal_adaptive_gcn.csv`,
+`results/metrics/temporal_static_vs_adaptive_f1_delta.csv`. No Phase
+1/2/3 file was modified — `gcn_test.npz`, `gcn_results.json`, and
+`baseline_results.json` are only read, never written, by the Phase 4
+scripts.

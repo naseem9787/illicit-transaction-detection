@@ -1,0 +1,77 @@
+{
+  "primary_comparison": "Static GCN vs Adaptive GCN (k=1, simulated delayed feedback)",
+  "threshold_reused_from_static_gcn": 0.8629422187805176,
+  "static_gcn_test_metrics": {
+    "threshold": 0.8629422187805176,
+    "n_samples": 16670,
+    "n_illicit": 1083,
+    "n_licit": 15587,
+    "precision": 0.30643459915611815,
+    "recall": 0.5364727608494921,
+    "f1": 0.39006377979187645,
+    "roc_auc": 0.8082991834294281,
+    "pr_auc": 0.2646601610089019,
+    "accuracy": 0.891001799640072,
+    "false_positive_rate": 0.08436517610829537,
+    "false_negative_rate": 0.46352723915050786,
+    "confusion_matrix": {
+      "tn": 14272,
+      "fp": 1315,
+      "fn": 502,
+      "tp": 581
+    }
+  },
+  "adaptive_gcn_test_metrics": {
+    "threshold": 0.8629422187805176,
+    "n_samples": 16670,
+    "n_illicit": 1083,
+    "n_licit": 15587,
+    "precision": 0.3890020366598778,
+    "recall": 0.5290858725761773,
+    "f1": 0.44835680751173707,
+    "roc_auc": 0.8285200021965885,
+    "pr_auc": 0.3101293829687254,
+    "accuracy": 0.9154169166166767,
+    "false_positive_rate": 0.05774042471290178,
+    "false_negative_rate": 0.4709141274238227,
+    "confusion_matrix": {
+      "tn": 14687,
+      "fp": 900,
+      "fn": 510,
+      "tp": 573
+    }
+  },
+  "f1_delta_summary": {
+    "mean_f1_delta_all_test_steps": 0.030412228133799932,
+    "mean_f1_delta_before_t43": 0.05823550820068132,
+    "mean_f1_delta_from_t43_onward": -0.001385806228350223
+  },
+  "secondary_reference_baselines_test_f1": {
+    "logreg_no_tstep": 0.3236866359447005,
+    "random_forest_no_tstep": 0.7898358920063525
+  },
+  "k3_sensitivity": {
+    "feedback_delay_k": 3,
+    "test_metrics": {
+      "threshold": 0.8629422187805176,
+      "n_samples": 16670,
+      "n_illicit": 1083,
+      "n_licit": 15587,
+      "precision": 0.3651295009475679,
+      "recall": 0.5337026777469991,
+      "f1": 0.43360840210052515,
+      "roc_auc": 0.8225510628367118,
+      "pr_auc": 0.2939804183369511,
+      "accuracy": 0.9094181163767247,
+      "false_positive_rate": 0.06447680759607365,
+      "false_negative_rate": 0.4662973222530009,
+      "confusion_matrix": {
+        "tn": 14582,
+        "fp": 1005,
+        "fn": 505,
+        "tp": 578
+      }
+    },
+    "note": "Sensitivity check only; NOT compared against k=1 to make any selection."
+  }
+}

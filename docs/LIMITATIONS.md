@@ -43,3 +43,45 @@ leakage-free pipeline" should be qualified with this caveat — our pipeline
 introduces no leakage, but we cannot rule out a small amount already present
 in the upstream released data. This is a known, general caveat about the
 public Elliptic release, not something specific to this codebase.
+
+---
+
+## L2 — The Phase 4 feedback delay is a simulated experimental assumption, not a dataset fact
+
+Phase 4's Adaptive GCN (`docs/EXPERIMENTS.md` Phase 4 section) uses a
+protocol where, after predicting time step t, t's true labels are treated
+as "revealed" and used to adapt the model before predicting t+k, for a
+fixed delay k (k=1 primary, k=3 sensitivity).
+
+**This delay is not established by the Elliptic dataset in any way.** The
+dataset contains no timestamped label-arrival information — nothing in
+`elliptic_txs_classes.csv`, `elliptic_txs_edgelist.csv`, or
+`elliptic_txs_features.csv` says when a transaction's illicit/licit
+determination became known relative to its own time step. The dataset
+only gives a static `time_step` per transaction and a final label; how
+and when that label was actually confirmed in the real investigative
+process that produced this dataset is not represented in the data at all.
+
+**What this means:**
+
+- "k=1: labels for t become available before prediction at t+1" is an
+  **explicit, documented experimental assumption** adopted to make a
+  walk-forward online-adaptation experiment well-defined and testable —
+  not a claim about how AML investigations actually worked when this
+  dataset was produced.
+- Every Phase 4 result (Adaptive GCN test metrics, the k=1 vs k=3
+  sensitivity comparison, the per-time-step F1 deltas) should be read as
+  conditional on this assumption: *if* labels became available with this
+  delay, *then* this is what online weight adaptation achieves. No
+  stronger claim is made or should be inferred.
+- Choosing a shorter delay (more optimistic about how fast feedback
+  arrives) tends to let the model adapt faster; a longer delay is more
+  conservative. Neither k=1 nor k=3 was chosen by testing which produces
+  better results on the test period — both were fixed in advance, and
+  k=3 is reported only as a sensitivity check, never used to select
+  between the two (`docs/EXPERIMENTS.md` Phase 4, "Sensitivity check: k=3").
+
+**How to treat this:** any statement about the Adaptive GCN's performance
+in a report, presentation, or comparison to Static GCN must carry this
+qualifier — it is a result about a *simulated* delayed-feedback protocol
+on this dataset, not a validated real-world feedback-latency finding.

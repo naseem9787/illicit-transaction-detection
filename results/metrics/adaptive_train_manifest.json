@@ -1,0 +1,69 @@
+{
+  "model": "Adaptive GCN (online weight adaptation, simulated delayed feedback)",
+  "base_checkpoint": "results/models/gcn.pt (Phase 3 static GCN, unmodified)",
+  "hidden_channels": 64,
+  "dropout": 0.5,
+  "pos_weight_fixed_from_train": 8.1887845993042,
+  "hyperparameter_selection": {
+    "period": "validation 30-34",
+    "candidate_grid_size": 4,
+    "selection_log": [
+      {
+        "lr": 0.001,
+        "grad_steps": 1,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.7600514829046345
+      },
+      {
+        "lr": 0.001,
+        "grad_steps": 3,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.7449065044881701
+      },
+      {
+        "lr": 0.005,
+        "grad_steps": 1,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.7189721442255782
+      },
+      {
+        "lr": 0.005,
+        "grad_steps": 3,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.7055052916829407
+      }
+    ],
+    "selected_lr": 0.001,
+    "selected_grad_steps": 1
+  },
+  "replay": false,
+  "primary_experiment": {
+    "feedback_delay_k": 1,
+    "test_time_steps": [
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49
+    ],
+    "n_adapt_events": 14,
+    "walk_time_seconds": 0.195
+  },
+  "sensitivity_experiment": {
+    "feedback_delay_k": 3,
+    "note": "Reported separately; NOT used to choose between k=1 and k=3.",
+    "n_adapt_events": 12,
+    "walk_time_seconds": 0.175
+  },
+  "torch_version": "2.14.0+cpu"
+}
