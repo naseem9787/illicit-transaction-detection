@@ -122,3 +122,181 @@ This lines up exactly with the illicit-rate figure from Phase 1
 much less variable illicit rate (mostly <3%, versus 10–15% for 35–42) —
 a genuine regime shift, not noise or a bug. Both baselines were fit on
 time steps 1–29, which look statistically more like 35–42 than 43–49.
+
+---
+
+## Phase 3 — Basic GNN (2-layer GCN)
+
+### Purpose
+
+Answer the Phase 3 research question directly: **does graph structure add
+predictive value over the feature-only Random Forest baseline?** This is a
+basic, deliberately untuned GNN — not the adaptive mechanism (Phase 4),
+which is out of scope here.
+
+### How snapshots are processed (methodology requirement)
+
+Per `docs/DECISIONS.md` D3, the dataset is 49 structurally independent
+graphs, one per time_step, with zero cross-time edges. The GCN is trained
+and evaluated on that same structure, not on one merged temporal graph:
+
+- `src/data/graph_builder.py::build_all_snapshots` (Phase 1, unchanged)
+  builds the 49 per-time-step snapshots.
+- `src/data/pyg_adapter.py` (new) wraps each `Snapshot` as a
+  `torch_geometric.data.Data` object with matching field names (`x`,
+  `edge_index`, `y`), plus `is_labeled` and `time_step` carried along per
+  node.
+- `src/training/gnn_training.py::build_split_batches` combines a split's
+  snapshots (e.g. all of time steps 1–29 for train) into one
+  `torch_geometric.data.Batch` via `Batch.from_data_list`. This is a plain
+  **block-diagonal** stack — `edge_index` values are offset per graph and
+  no edge is ever created between two snapshots. Batching is therefore
+  mathematically identical to running each snapshot through the model one
+  at a time; it's used only for training/inference efficiency. Verified
+  directly in `tests/test_gnn.py::test_batch_is_block_diagonal` and
+  `test_no_edges_cross_snapshot_boundaries_in_real_batches`.
+- Raw edges are re-read directly from `elliptic_txs_edgelist.csv` (Phase 1
+  never caches edges to `data/processed/` — see `docs/DATA_AUDIT.md`), so
+  no change was needed to any Phase 1 output file.
+
+Unknown-labeled nodes (`label == -1`) **do participate in message
+passing** — they are real graph neighbors and dropping them would throw
+away real structural information for their labeled neighbors — but they
+never contribute to the loss or to any reported metric. This is enforced
+by masking on `is_labeled` at the loss (`src/training/gnn_training.py::
+train_gcn`) and at prediction time (`predict_labeled`), and is checked
+directly in `tests/test_gnn.py::
+test_unknown_labels_excluded_from_is_labeled_but_present_in_graph`.
+
+No future information reaches training: train/val/test are the same
+chronological ranges as Phase 1/2 (1–29 / 30–34 / 35–49), the model is
+never shown val or test snapshots during backpropagation, and the decision
+threshold is selected on validation predictions only (see below) —
+identical discipline to Phase 2.
+
+### Model
+
+`src/models/gcn.py::GCN` — a plain 2-layer GCN, node features + edges
+only, no edge features, no residual connections:
+
+```
+GCNConv(165, 64) -> ReLU -> Dropout(0.5) -> GCNConv(64, 1)
+```
+
+Output is a single raw logit per node; `sigmoid(logit)` is the illicit
+probability, matching the same `y_prob` convention `src/evaluation/
+metrics.py` already expects from the sklearn baselines, so no evaluation
+code had to change. Deliberately fixed, not tuned — same "don't
+over-tune" scope decision as Random Forest's 3-config search
+(`docs/DECISIONS.md` D9).
+
+### Class imbalance handling
+
+`BCEWithLogitsLoss(pos_weight=n_negative/n_positive)`, computed from the
+**training split's labeled nodes only** (`src/training/gnn_training.py::
+compute_pos_weight`). This is the standard PyTorch idiom for binary
+imbalance and is analogous in intent to `class_weight="balanced"` used
+for Logistic Regression / Random Forest, but not numerically identical to
+sklearn's formula — documented as an analogy, not an equivalence.
+
+### Training configuration
+
+| setting | value |
+|---|---|
+| optimizer | Adam |
+| learning rate | 0.01 |
+| weight decay | 5e-4 |
+| epochs | 200 (fixed) |
+| checkpoint selection | best validation PR-AUC across all 200 epochs (never test) |
+| seed | 42 (project-wide seed, `config.yaml`) |
+| batching | full-batch per split per epoch (block-diagonal, see above) |
+| PyTorch | 2.14.0+cpu |
+| PyTorch Geometric | 2.8.0.post1 |
+| device | CPU (dataset is small enough — max snapshot ≈7,880 nodes — that GPU wasn't needed; kept the install CPU-only to avoid an unnecessary CUDA download) |
+| train time | 63.5s (`results/metrics/gcn_train_manifest.json`, hardware-dependent) |
+| best epoch | 171 / 200 |
+| best validation PR-AUC | 0.7707 |
+
+Preprocessing: none beyond Phase 1's existing global standardization — no
+additional feature scaling, same as Phase 2 (`f1..f165` are already
+z-scored by the dataset authors; see `docs/DATA_AUDIT.md` §4 and
+`docs/LIMITATIONS.md` L1 for the caveat on that standardization's
+provenance).
+
+### Threshold selection
+
+Same procedure as Phase 2: `select_threshold_maximizing_f1` run on
+validation predictions only, then frozen for test
+(`scripts/evaluate_gnn.py::evaluate_gcn`). Selected threshold: **0.863**.
+
+### Results — TEST set (time steps 35–49), frozen threshold
+
+| Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.202 | 0.813 | 0.323 | 0.856 | 0.209 |
+| Random Forest | 0.926 | 0.689 | 0.790 | 0.936 | 0.787 |
+| **GCN (basic)** | 0.306 | 0.536 | 0.390 | 0.808 | 0.265 |
+
+GCN test confusion matrix (threshold 0.863): TN=14272, FP=1315, FN=502,
+TP=581.
+
+Validation metrics (for context — not the comparison number, since
+val/test are known to diverge sharply on this dataset for every model
+tried so far): precision 0.724, recall 0.809, F1 0.764, ROC-AUC 0.943,
+PR-AUC 0.771.
+
+### Answering the Phase 3 research question
+
+**Graph structure alone, in this basic un-tuned form, does not beat the
+feature-only Random Forest baseline.** The GCN beats Logistic Regression
+on F1 (0.390 vs 0.323) and is roughly comparable on ROC-AUC (0.808 vs
+0.856), but is well below Random Forest on every metric (F1 0.390 vs
+0.790, PR-AUC 0.265 vs 0.787). This is a real, negative-leaning result for
+"does graph structure help" as posed — not a bug: the same val→test
+generalization gap and the same time-step regime shift documented for the
+Phase 2 baselines (see below) also affects the GCN, and a single fixed,
+untuned architecture/hyperparameter set is not expected to be
+competitive with an already-selected Random Forest.
+
+This result should not be read as "graph structure is useless for this
+problem" — the published literature on Elliptic (including the dataset's
+own release paper) also finds plain GCN weaker than tree-based/ensemble
+methods on this exact dataset, with better GNN results typically requiring
+either more feature engineering, deeper/tuned architectures, or exactly
+the kind of temporal modeling Phase 4 will explore. It does establish a
+concrete, honest floor for what "graph, minimally applied" achieves here,
+which is what Phase 3 was scoped to determine.
+
+### Temporal breakdown (test period, 35–49)
+
+Full per-time-step numbers in `results/metrics/temporal_gcn.csv` and
+`results/figures/gcn_f1_over_time.png`.
+
+The GCN shows the same qualitative pattern as both Phase 2 baselines:
+moderate F1 (0.14–0.70) through time step 42, then a collapse from time
+step 43 onward (F1 exactly 0.0 at steps 44, 45, 48, 49; near-zero at 43,
+46, 47). This matches the same regime shift already documented for
+Logistic Regression and Random Forest — time steps 43–49 have a much
+lower, much less variable illicit rate than the 1–29 training period —
+and is further evidence that this collapse is a property of the dataset's
+temporal drift, not specific to any one model family. This is exactly the
+kind of temporal instability that motivates Phase 4, without this
+document making any claim about what Phase 4's design should be.
+
+### Figures
+
+`results/figures/gcn_vs_baselines_comparison.png` (3-way bar chart),
+`results/figures/gcn_f1_over_time.png`,
+`results/figures/pr_roc_curves_all_models.png` (PR and ROC curves for all
+three models overlaid), `results/figures/gcn_confusion_matrix.png`.
+
+### Files
+
+`src/models/gcn.py`, `src/data/pyg_adapter.py`,
+`src/training/gnn_training.py`, `scripts/train_gnn.py`,
+`scripts/evaluate_gnn.py`, `tests/test_gnn.py`. Outputs:
+`results/models/gcn.pt`, `results/metrics/predictions/gcn_{train,val,test}.npz`,
+`results/metrics/gcn_train_manifest.json`, `results/metrics/gcn_results.json`,
+`results/metrics/temporal_gcn.csv`. No Phase 1 or Phase 2 file was
+modified — Phase 2's `baseline_results.json` and prediction files are
+only read, never written, by the Phase 3 scripts.

@@ -7,9 +7,13 @@ matplotlib>=3.7
 pyyaml>=6.0
 pytest>=7.4
 
-# Phase 3+ (GNN / adaptive model) — NOT installed/verified yet.
-# This sandbox could not install torch (disk quota on the CPU wheel
-# download); install these on a team machine or Colab before Phase 3.
-# torch>=2.1
-# torch-geometric>=2.4
+# Phase 3 (basic GCN) — installed and verified in this environment.
+# CPU-only build (this dataset's largest snapshot is ~7,880 nodes; a GPU
+# build would add a large unnecessary CUDA download for no real benefit
+# here). The extra index below is required to resolve the "+cpu" build;
+# plain PyPI does not host it under that local version tag.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0+cpu
+torch_geometric==2.8.0.post1
+
 # xgboost>=2.0  # only if XGBoost is chosen over RandomForest for Baseline B
