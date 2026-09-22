@@ -1,0 +1,32 @@
+seed: 42
+
+dataset:
+  raw_dir: "data/raw/elliptic_bitcoin_dataset"
+  classes_file: "elliptic_txs_classes.csv"
+  edges_file: "elliptic_txs_edgelist.csv"
+  features_file: "elliptic_txs_features.csv"
+  processed_dir: "data/processed"
+  num_time_steps: 49
+  num_raw_feature_columns: 165  # excludes txId and time_step
+
+# Chronological split, in time_step units (inclusive on both ends).
+# Test boundary (35-49) matches the split used in Weber et al. 2019, the
+# paper that released this dataset, and essentially all follow-up work,
+# so our results stay comparable to literature-reported numbers on the
+# same test region. Validation is carved out of the tail of the training
+# region rather than inventing a new boundary.
+split:
+  train_start: 1
+  train_end: 29
+  val_start: 30
+  val_end: 34
+  test_start: 35
+  test_end: 49
+
+logging:
+  level: "INFO"
+
+paths:
+  figures_dir: "results/figures"
+  metrics_dir: "results/metrics"
+  models_dir: "results/models"

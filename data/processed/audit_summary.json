@@ -1,0 +1,52 @@
+{
+  "runtime_seconds": {
+    "load": 4.88,
+    "validate": 0.38,
+    "preprocess": 1.12,
+    "build_graphs": 0.93,
+    "total": 7.29
+  },
+  "validation_report": {
+    "label_counts": {
+      "unknown": 157205,
+      "2": 42019,
+      "1": 4545
+    },
+    "num_time_steps": 49,
+    "time_step_range": [
+      1,
+      49
+    ],
+    "duplicate_edges": 0,
+    "self_loops": 0,
+    "cross_time_edges": 0
+  },
+  "split_config": {
+    "train_start": 1,
+    "train_end": 29,
+    "val_start": 30,
+    "val_end": 34,
+    "test_start": 35,
+    "test_end": 49
+  },
+  "split_counts": {
+    "test": {
+      "num_nodes": 67504,
+      "num_labeled": 16670,
+      "num_illicit": 1083
+    },
+    "train": {
+      "num_nodes": 120804,
+      "num_labeled": 26381,
+      "num_illicit": 2871
+    },
+    "val": {
+      "num_nodes": 15461,
+      "num_labeled": 3513,
+      "num_illicit": 591
+    }
+  },
+  "num_snapshots_built": 49,
+  "total_nodes": 203769,
+  "total_edges": 234355
+}

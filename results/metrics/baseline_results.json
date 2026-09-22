@@ -1,0 +1,139 @@
+{
+  "primary_models": {
+    "logreg_no_tstep": {
+      "label": "Logistic Regression",
+      "threshold": 0.9560156464576721,
+      "val_metrics": {
+        "threshold": 0.9560156464576721,
+        "n_samples": 3513,
+        "n_illicit": 591,
+        "n_licit": 2922,
+        "precision": 0.6987087517934003,
+        "recall": 0.8240270727580372,
+        "f1": 0.7562111801242236,
+        "roc_auc": 0.9486595070247182,
+        "pr_auc": 0.6852220411189867,
+        "accuracy": 0.910617705664674,
+        "false_positive_rate": 0.07186858316221766,
+        "false_negative_rate": 0.17597292724196278,
+        "confusion_matrix": {
+          "tn": 2712,
+          "fp": 210,
+          "fn": 104,
+          "tp": 487
+        }
+      },
+      "test_metrics": {
+        "threshold": 0.9560156464576721,
+        "n_samples": 16670,
+        "n_illicit": 1083,
+        "n_licit": 15587,
+        "precision": 0.2022109626900046,
+        "recall": 0.8107109879963066,
+        "f1": 0.3236866359447005,
+        "roc_auc": 0.856997429197485,
+        "pr_auc": 0.20979056752115405,
+        "accuracy": 0.7799040191961608,
+        "false_positive_rate": 0.22223647911721306,
+        "false_negative_rate": 0.18928901200369344,
+        "confusion_matrix": {
+          "tn": 12123,
+          "fp": 3464,
+          "fn": 205,
+          "tp": 878
+        }
+      }
+    },
+    "random_forest_no_tstep": {
+      "label": "Random Forest",
+      "threshold": 0.5333333333333333,
+      "val_metrics": {
+        "threshold": 0.5333333333333333,
+        "n_samples": 3513,
+        "n_illicit": 591,
+        "n_licit": 2922,
+        "precision": 0.9809688581314879,
+        "recall": 0.9593908629441624,
+        "f1": 0.9700598802395209,
+        "roc_auc": 0.9970924812178108,
+        "pr_auc": 0.9883499511891854,
+        "accuracy": 0.9900370054084828,
+        "false_positive_rate": 0.0037645448323066393,
+        "false_negative_rate": 0.04060913705583756,
+        "confusion_matrix": {
+          "tn": 2911,
+          "fp": 11,
+          "fn": 24,
+          "tp": 567
+        }
+      },
+      "test_metrics": {
+        "threshold": 0.5333333333333333,
+        "n_samples": 16670,
+        "n_illicit": 1083,
+        "n_licit": 15587,
+        "precision": 0.9255583126550868,
+        "recall": 0.6888273314866112,
+        "f1": 0.7898358920063525,
+        "roc_auc": 0.935958837303217,
+        "pr_auc": 0.7874640041559667,
+        "accuracy": 0.9761847630473905,
+        "false_positive_rate": 0.003849361647526785,
+        "false_negative_rate": 0.31117266851338876,
+        "confusion_matrix": {
+          "tn": 15527,
+          "fp": 60,
+          "fn": 337,
+          "tp": 746
+        }
+      }
+    }
+  },
+  "secondary_models": {
+    "logreg_with_tstep": {
+      "label": "Logistic Regression (+ time_step, secondary)",
+      "threshold": 0.95591801404953,
+      "val_metrics": {
+        "threshold": 0.95591801404953,
+        "n_samples": 3513,
+        "n_illicit": 591,
+        "n_licit": 2922,
+        "precision": 0.7023121387283237,
+        "recall": 0.8223350253807107,
+        "f1": 0.7575993764614185,
+        "roc_auc": 0.9488662356057262,
+        "pr_auc": 0.689113169489136,
+        "accuracy": 0.9114716766296612,
+        "false_positive_rate": 0.07049965776865161,
+        "false_negative_rate": 0.17766497461928935,
+        "confusion_matrix": {
+          "tn": 2716,
+          "fp": 206,
+          "fn": 105,
+          "tp": 486
+        }
+      },
+      "test_metrics": {
+        "threshold": 0.95591801404953,
+        "n_samples": 16670,
+        "n_illicit": 1083,
+        "n_licit": 15587,
+        "precision": 0.20324449594438007,
+        "recall": 0.8097876269621422,
+        "f1": 0.324935161170804,
+        "roc_auc": 0.8572611916280116,
+        "pr_auc": 0.21057640456870613,
+        "accuracy": 0.7814037192561488,
+        "false_positive_rate": 0.22056842240328478,
+        "false_negative_rate": 0.1902123730378578,
+        "confusion_matrix": {
+          "tn": 12149,
+          "fp": 3438,
+          "fn": 206,
+          "tp": 877
+        }
+      }
+    }
+  },
+  "best_primary_model_by_test_f1": "random_forest_no_tstep"
+}

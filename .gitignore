@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+
+# Raw dataset (large, not ours to redistribute — see README for how to
+# obtain it and where to place it)
+data/raw/
+
+# Secrets / local env
+.env
+*.log
+
+# Stray/duplicate output directory from an early run before the config's
+# processed_dir path was finalized to data/processed/ — superseded by
+# data/processed/, not part of the documented project structure.
+/processed/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# pytest
+.pytest_cache/

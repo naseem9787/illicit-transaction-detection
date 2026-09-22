@@ -1,0 +1,15 @@
+# Phase 1 (data pipeline) — installed and verified in this environment
+pandas>=2.0
+numpy>=1.24
+scipy>=1.10
+scikit-learn>=1.3
+matplotlib>=3.7
+pyyaml>=6.0
+pytest>=7.4
+
+# Phase 3+ (GNN / adaptive model) — NOT installed/verified yet.
+# This sandbox could not install torch (disk quota on the CPU wheel
+# download); install these on a team machine or Colab before Phase 3.
+# torch>=2.1
+# torch-geometric>=2.4
+# xgboost>=2.0  # only if XGBoost is chosen over RandomForest for Baseline B
