@@ -1,0 +1,56 @@
+{
+  "candidate_grid": [
+    {
+      "lr": 0.001,
+      "grad_steps": 1,
+      "feedback_delay_k": 1
+    },
+    {
+      "lr": 0.001,
+      "grad_steps": 3,
+      "feedback_delay_k": 1
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 1,
+      "feedback_delay_k": 1
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 3,
+      "feedback_delay_k": 1
+    }
+  ],
+  "selection_log": [
+    {
+      "lr": 0.001,
+      "grad_steps": 1,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.8623935883743891
+    },
+    {
+      "lr": 0.001,
+      "grad_steps": 3,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.8531729341333827
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 1,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.8373096589637702
+    },
+    {
+      "lr": 0.005,
+      "grad_steps": 3,
+      "feedback_delay_k": 1,
+      "val_pooled_pr_auc": 0.8223084342956133
+    }
+  ],
+  "selected": {
+    "lr": 0.001,
+    "grad_steps": 1
+  },
+  "selection_criterion": "pooled PR-AUC over validation 30-34 predictions, k=1",
+  "replay": false
+}

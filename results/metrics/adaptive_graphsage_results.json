@@ -1,0 +1,87 @@
+{
+  "primary_comparison": "Static GraphSAGE vs Adaptive GraphSAGE (k=1, simulated delayed feedback)",
+  "frozen_threshold_from_phase5_validation": 0.8980084657669067,
+  "static_graphsage_test_metrics": {
+    "threshold": 0.8980084657669067,
+    "n_samples": 16670,
+    "n_illicit": 1083,
+    "n_licit": 15587,
+    "precision": 0.4395457581830327,
+    "recall": 0.6075715604801477,
+    "f1": 0.5100775193798449,
+    "roc_auc": 0.875065792509692,
+    "pr_auc": 0.42959729170778327,
+    "accuracy": 0.9241751649670066,
+    "false_positive_rate": 0.05382690703791621,
+    "false_negative_rate": 0.39242843951985223,
+    "confusion_matrix": {
+      "tn": 14748,
+      "fp": 839,
+      "fn": 425,
+      "tp": 658
+    }
+  },
+  "adaptive_graphsage_test_metrics": {
+    "threshold": 0.8980084657669067,
+    "n_samples": 16670,
+    "n_illicit": 1083,
+    "n_licit": 15587,
+    "precision": 0.4968107725017718,
+    "recall": 0.6472760849492152,
+    "f1": 0.56214915797915,
+    "roc_auc": 0.8892688588360652,
+    "pr_auc": 0.524441244586792,
+    "accuracy": 0.9344931013797241,
+    "false_positive_rate": 0.04555077949573363,
+    "false_negative_rate": 0.3527239150507849,
+    "confusion_matrix": {
+      "tn": 14877,
+      "fp": 710,
+      "fn": 382,
+      "tp": 701
+    }
+  },
+  "metric_changes_adaptive_minus_static": {
+    "precision": 0.057265014318739094,
+    "recall": 0.03970452446906747,
+    "f1": 0.05207163859930508,
+    "roc_auc": 0.014203066326373248,
+    "pr_auc": 0.09484395287900871
+  },
+  "f1_delta_summary": {
+    "mean_delta_t35_42": 0.0659854016357734,
+    "mean_delta_t43_49": -0.0018014788920281241,
+    "mean_delta_all": 0.03435152405613269
+  },
+  "exploratory_wilcoxon_f1_deltas": {
+    "n_steps": 15,
+    "n_nonzero_deltas": 10,
+    "statistic": 4.0,
+    "p_value": 0.016604878103722735
+  },
+  "random_forest_reference_test_f1": 0.7898358920063525,
+  "k3_sensitivity": {
+    "feedback_delay_k": 3,
+    "test_metrics": {
+      "threshold": 0.8980084657669067,
+      "n_samples": 16670,
+      "n_illicit": 1083,
+      "n_licit": 15587,
+      "precision": 0.45585349901896666,
+      "recall": 0.6435826408125577,
+      "f1": 0.5336906584992342,
+      "roc_auc": 0.8841919429863215,
+      "pr_auc": 0.49838987693771497,
+      "accuracy": 0.9269346130773846,
+      "false_positive_rate": 0.05337781484570475,
+      "false_negative_rate": 0.3564173591874423,
+      "confusion_matrix": {
+        "tn": 14755,
+        "fp": 832,
+        "fn": 386,
+        "tp": 697
+      }
+    },
+    "note": "Sensitivity check only; not used for any selection."
+  }
+}

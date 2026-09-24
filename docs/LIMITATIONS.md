@@ -85,3 +85,31 @@ process that produced this dataset is not represented in the data at all.
 in a report, presentation, or comparison to Static GCN must carry this
 qualifier — it is a result about a *simulated* delayed-feedback protocol
 on this dataset, not a validated real-world feedback-latency finding.
+
+---
+
+## L3 — Phase 6 (adaptive GraphSAGE) limitations
+
+These apply to every Phase 6 result in `docs/EXPERIMENTS.md`, in addition to
+L2 (the feedback delay is a simulated experimental assumption, not a dataset
+fact).
+
+- **Single seed.** All results use seed 42. There is no multi-seed
+  robustness study yet, so run-to-run variance is unquantified.
+- **Small validation slice.** Adaptation hyperparameters (lr, grad_steps)
+  were selected on only 5 validation time steps (30-34) among four close
+  candidates, so the selection has limited statistical power and some
+  selection variance.
+- **Simulated feedback delay.** k=1 (primary) and k=3 (sensitivity) are
+  assumptions. Neither was chosen by comparing test performance.
+- **Persistent Adam state.** The optimizer is created once per walk and its
+  state persists across adaptation events, so `grad_steps=1` is not an
+  independent fixed-size update at every event.
+- **Wilcoxon caveat.** The exploratory paired Wilcoxon test uses 15 per-step
+  F1 differences (10 non-zero) that are temporally ordered rather than
+  independent. It is descriptive supporting evidence, not evidence of
+  generalization or proof of significance.
+- **Noisy later-period metrics.** Illicit prevalence in t=43-49 is low, so
+  per-step F1 there is noisy and often exactly 0 for both models.
+- **No replay** and no other adaptive mechanism was used; results describe
+  this minimal online fine-tuning protocol only.

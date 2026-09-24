@@ -582,3 +582,173 @@ Outputs: `results/metrics/adaptive_hparam_selection.json`,
 1/2/3 file was modified — `gcn_test.npz`, `gcn_results.json`, and
 `baseline_results.json` are only read, never written, by the Phase 4
 scripts.
+
+---
+
+## Phase 6 — Adaptive GraphSAGE (delayed-feedback online adaptation on the Phase 5 static model)
+
+### Research question
+
+Does delayed-feedback online adaptation still improve performance when it is
+applied to the stronger static GraphSAGE model selected in Phase 5, rather
+than to the basic GCN used in Phase 4? The comparison is Static GraphSAGE
+vs Adaptive GraphSAGE. Random Forest is a secondary reference only.
+
+### Static GraphSAGE configuration (frozen Phase 5 model, unmodified)
+
+`SAGEConv(165, 128) -> ReLU -> Dropout(0.5) -> SAGEConv(128, 1)`, Adam
+lr=0.01, weight_decay=5e-4, seed 42, checkpoint
+`results/models/gnn_improvement_selected.pt` (selected in Phase 5 by
+validation PR-AUC only). The classification threshold is the Phase 5
+validation-F1 threshold, **0.898**, and it is frozen for both the static and
+adaptive models. It is never re-selected. Static test predictions are the
+existing `gnn_improvement_test.npz`, read-only.
+
+### Adaptive GraphSAGE protocol
+
+Identical to Phase 4; only the base model differs. Both models start from
+exactly the same checkpoint. For `t = 35 ... 49`, strictly in order:
+`prediction(t) -> freeze/log prediction(t) -> reveal labels(t) -> adaptation
+update -> prediction(t+1)`. The walk is `run_adaptive_walk` from
+`src/training/adaptive_gnn.py`, reused unchanged. The loss is
+`BCEWithLogitsLoss` with a fixed train-derived `pos_weight` (8.1888,
+train 1-29). There is no replay, no drift features, no RL/meta-learning and
+no EvolveGCN. Each update trains only on the one revealed snapshot's
+labeled nodes.
+
+**The feedback delay is a simulated experimental assumption**, not a
+property of the Elliptic dataset: after predicting time step t, labels for t
+are assumed to become available before prediction at t+1 (k=1, primary) or
+t+3 (k=3, sensitivity). See `docs/LIMITATIONS.md` L2.
+
+### Validation-only adaptation hyperparameter selection
+
+Phase 4's `select_adaptation_config` hard-codes `GCN`, so Phase 6 adds a
+model-factory wrapper (`src/training/adaptive_graphsage.py`) rather than
+editing Phase 4 code. The wrapper rejects any non-k=1 candidate, so the k=3
+run cannot influence selection. The pre-declared grid was walked forward
+over validation steps 30-34 (k=1), starting from a fresh copy of the
+checkpoint for each candidate. Selection is by pooled validation PR-AUC.
+
+| lr | grad_steps | k | val pooled PR-AUC |
+|---:|---:|---:|---:|
+| **0.001** | **1** | 1 | **0.8624** |
+| 0.001 | 3 | 1 | 0.8532 |
+| 0.005 | 1 | 1 | 0.8373 |
+| 0.005 | 3 | 1 | 0.8223 |
+
+**Selected adaptation configuration: lr=0.001, grad_steps=1.** Every
+candidate is below the static model's own validation PR-AUC (0.8640), so
+adaptation did not improve the validation walk itself, the same pattern seen
+in Phase 4. Only 5 validation time steps were available for this selection.
+
+### Test metrics (time steps 35-49, shared frozen threshold 0.898)
+
+| Model | Precision | Recall | F1 | ROC-AUC | PR-AUC | Accuracy | FPR | FNR |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Static GraphSAGE | 0.440 | 0.608 | 0.510 | 0.875 | 0.430 | 0.924 | 0.054 | 0.392 |
+| Adaptive GraphSAGE (k=1) | 0.497 | 0.647 | 0.562 | 0.889 | 0.524 | 0.935 | 0.046 | 0.353 |
+| Adaptive − Static | +0.057 | +0.040 | **+0.052** | +0.014 | **+0.095** | | | |
+
+Static confusion matrix: TN=14748, FP=839, FN=425, TP=658. Adaptive
+confusion matrix: TN=14877, FP=710, FN=382, TP=701. Both models are
+evaluated on the identical 16,670 labeled test nodes. Verified directly:
+`time_step` and `y_true` arrays are element-for-element equal, and the t=35
+predictions are bit-identical before the first update.
+
+### k=3 sensitivity result
+
+Same selected lr/grad_steps, only the delay changed. F1 = 0.534,
+PR-AUC = 0.498, ROC-AUC = 0.884 (Precision 0.456, Recall 0.644). It sits
+between the static model and k=1 on these metrics. It is reported
+separately and was **not** used for any model or configuration selection.
+
+### Per-time-step results
+
+| t | n labeled | illicit rate | Static F1 | Adaptive F1 | Delta (Adaptive − Static) |
+|---:|---:|---:|---:|---:|---:|
+| 35 | 1341 | 0.136 | 0.756 | 0.756 | 0.000 |
+| 36 | 1708 | 0.019 | 0.313 | 0.339 | +0.026 |
+| 37 | 498 | 0.080 | 0.475 | 0.605 | +0.129 |
+| 38 | 756 | 0.147 | 0.584 | 0.768 | +0.184 |
+| 39 | 1183 | 0.068 | 0.718 | 0.756 | +0.038 |
+| 40 | 1211 | 0.092 | 0.528 | 0.558 | +0.030 |
+| 41 | 1132 | 0.102 | 0.544 | 0.635 | +0.091 |
+| 42 | 2154 | 0.111 | 0.633 | 0.662 | +0.029 |
+| 43 | 1370 | 0.018 | 0.000 | 0.000 | 0.000 |
+| 44 | 1591 | 0.015 | 0.043 | 0.036 | −0.006 |
+| 45 | 1221 | 0.004 | 0.000 | 0.000 | 0.000 |
+| 46 | 712 | 0.003 | 0.074 | 0.091 | +0.017 |
+| 47 | 846 | 0.026 | 0.000 | 0.000 | 0.000 |
+| 48 | 471 | 0.076 | 0.000 | 0.000 | 0.000 |
+| 49 | 476 | 0.118 | 0.023 | 0.000 | −0.023 |
+
+Files: `results/metrics/temporal_static_vs_adaptive_graphsage_f1_delta.csv`,
+`temporal_adaptive_graphsage.csv`, and the `adaptive_graphsage_*` figures in
+`results/figures/`.
+
+### Temporal-period comparison
+
+| period | mean per-step F1 delta (Adaptive − Static) |
+|---|---:|
+| t=35-42 | **+0.066** |
+| t=43-49 | **−0.002** |
+
+The observed aggregate improvement is concentrated in the earlier test
+period, and the later period shows essentially no mean improvement. This
+document does not claim that adaptation causally fails after t=43, and it
+does not claim that t=43 is a proven regime boundary. The split at 43 is the
+same descriptive cut used in Phases 3 and 4.
+
+### Exploratory Wilcoxon analysis
+
+An exploratory paired Wilcoxon signed-rank test across the 15 temporal F1
+differences yielded W=4.0 and two-sided p=0.0166. Five differences were
+exactly zero and were dropped, leaving 10 non-zero pairs. Because the
+observations are temporally ordered rather than independent, and the
+experiment uses a single seed and selected configuration, this is treated as
+descriptive supporting evidence rather than evidence of generalization. It
+is not presented as proof of statistical significance.
+
+### Random Forest comparison
+
+Random Forest test F1 = 0.790; Adaptive GraphSAGE test F1 = 0.562; absolute
+gap ≈ 0.228. Adaptive GraphSAGE improves substantially over its static
+GraphSAGE baseline but remains below the Random Forest benchmark on the
+reported test F1. The adaptive GNN does not outperform Random Forest.
+
+### Connection to Phase 4
+
+The qualitative temporal pattern is similar in the two experiments:
+
+| | overall F1 | mean delta t=35-42 | mean delta t=43-49 |
+|---|---|---:|---:|
+| Phase 4: Adaptive GCN | 0.390 → 0.448 | +0.058 | −0.001 |
+| Phase 6: Adaptive GraphSAGE | 0.510 → 0.562 | +0.066 | −0.002 |
+
+This is a descriptive similarity only. It does not show that the same
+mechanism caused both effects.
+
+### Limitations / caveats
+
+- Single seed (42); no multi-seed robustness study has been run.
+- Adaptation hyperparameters were selected on only 5 validation time steps
+  (30-34), so the selection has limited statistical power and some variance.
+- The feedback delay is simulated, not a dataset property.
+- The Adam optimizer state persists across sequential adaptation events, so
+  `grad_steps=1` is not an independent fixed-size update at each event.
+- The 15 per-step observations behind the Wilcoxon test are temporally
+  ordered, not independent.
+- Illicit prevalence in t=43-49 is low (about 0.3-11.8% per step, with
+  several steps under 3%), so per-step F1 there is noisy; several steps are
+  exactly 0 for both models.
+- No replay was used.
+- See also `docs/LIMITATIONS.md` L2 and L3.
+
+### Files
+
+`src/training/adaptive_graphsage.py`, `scripts/train_adaptive_graphsage.py`,
+`scripts/evaluate_adaptive_graphsage.py`, `tests/test_adaptive_graphsage.py`.
+Outputs: `results/metrics/adaptive_graphsage_{hparam_selection,train_manifest,results}.json`,
+`results/metrics/predictions/adaptive_graphsage_test{,_k3}.npz`, and the
+temporal CSVs and figures listed above. No Phase 1-5 file was modified.

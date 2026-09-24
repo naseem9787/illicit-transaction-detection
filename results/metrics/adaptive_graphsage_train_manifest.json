@@ -1,0 +1,68 @@
+{
+  "model": "Adaptive GraphSAGE (online weight adaptation, simulated delayed feedback)",
+  "base_checkpoint": "results/models/gnn_improvement_selected.pt (Phase 5, unmodified)",
+  "architecture": "SAGEConv(165,128) -> ReLU -> Dropout(0.5) -> SAGEConv(128,1)",
+  "pos_weight_fixed_from_train": 8.1887845993042,
+  "hyperparameter_selection": {
+    "period": "validation 30-34",
+    "candidate_grid_size": 4,
+    "selection_log": [
+      {
+        "lr": 0.001,
+        "grad_steps": 1,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.8623935883743891
+      },
+      {
+        "lr": 0.001,
+        "grad_steps": 3,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.8531729341333827
+      },
+      {
+        "lr": 0.005,
+        "grad_steps": 1,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.8373096589637702
+      },
+      {
+        "lr": 0.005,
+        "grad_steps": 3,
+        "feedback_delay_k": 1,
+        "val_pooled_pr_auc": 0.8223084342956133
+      }
+    ],
+    "selected_lr": 0.001,
+    "selected_grad_steps": 1
+  },
+  "replay": false,
+  "primary_experiment": {
+    "feedback_delay_k": 1,
+    "test_time_steps": [
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49
+    ],
+    "n_adapt_events": 14,
+    "walk_time_seconds": 0.418
+  },
+  "sensitivity_experiment": {
+    "feedback_delay_k": 3,
+    "note": "Reported separately; NOT used to choose between k=1 and k=3.",
+    "n_adapt_events": 12,
+    "walk_time_seconds": 0.405
+  },
+  "torch_version": "2.14.0+cpu"
+}
