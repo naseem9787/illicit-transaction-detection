@@ -28,3 +28,6 @@ Thumbs.db
 
 # pytest
 .pytest_cache/
+
+# Local Claude Code state
+.claude/
