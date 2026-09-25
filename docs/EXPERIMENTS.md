@@ -752,3 +752,182 @@ mechanism caused both effects.
 Outputs: `results/metrics/adaptive_graphsage_{hparam_selection,train_manifest,results}.json`,
 `results/metrics/predictions/adaptive_graphsage_test{,_k3}.npz`, and the
 temporal CSVs and figures listed above. No Phase 1-5 file was modified.
+
+---
+
+## Phase 7 — Multi-seed robustness of Static vs Adaptive GraphSAGE
+
+### Research question
+
+Is the Phase 6 improvement from Static GraphSAGE to Adaptive GraphSAGE
+(F1 0.510 to 0.562 at seed 42) reproducible across random seeds, or specific
+to the single seed used there? This is a robustness study only. No new
+architecture or adaptation mechanism was introduced, and nothing was retuned.
+
+### Design
+
+- **Seeds:** exactly 42, 123, 456, 789, 2024.
+- **Static GraphSAGE (same for every seed):**
+  `SAGEConv(165,128) -> ReLU -> Dropout(0.5) -> SAGEConv(128,1)`, Adam
+  lr=0.01, weight_decay=5e-4, 200 epochs, checkpoint chosen by validation
+  PR-AUC (30-34), same loss and train-derived `pos_weight` as Phase 5.
+- **Adaptive GraphSAGE (same for every seed):** initialized from the same
+  seed's static checkpoint; delayed-feedback walk from Phase 4 reused
+  unchanged; lr=0.001, grad_steps=1, k=1, no replay. The configuration was not
+  reselected per seed.
+- **Split:** train 1-29, validation 30-34, test 35-49. Unknown labels are
+  excluded from loss and metrics. All comparisons use the same 16,670 labeled
+  test nodes.
+- **Primary threshold:** fixed at **0.898** (the Phase 6 value) for every
+  seed. It is never selected with test labels.
+- **Seed 42 is the official reference.** Its result is the existing Phase 5/6
+  artifacts, reused read-only and not retrained.
+- **Code:** `scripts/train_multiseed_robustness.py`,
+  `scripts/evaluate_multiseed_robustness.py`,
+  `tests/test_multiseed_robustness.py`. Outputs are under
+  `results/metrics/multiseed/`, `results/models/multiseed/` and
+  `results/figures/multiseed_robustness.png`.
+
+The feedback delay (labels for t available before prediction at t+1) is a
+simulated experimental assumption, not a dataset property (`docs/LIMITATIONS.md`
+L2).
+
+### Per-seed results (fixed threshold 0.898)
+
+| Seed | Static F1 | Adaptive F1 | ΔF1 | Static PR-AUC | Adaptive PR-AUC | ΔPR-AUC |
+|---:|---:|---:|---:|---:|---:|---:|
+| 42 (reference) | 0.510 | 0.562 | +0.052 | 0.430 | 0.524 | +0.095 |
+| 123 | 0.438 | 0.537 | +0.099 | 0.511 | 0.560 | +0.049 |
+| 456 | 0.462 | 0.549 | +0.086 | 0.411 | 0.536 | +0.125 |
+| 789 | 0.534 | 0.598 | +0.064 | 0.479 | 0.567 | +0.087 |
+| 2024 | 0.526 | 0.584 | +0.058 | 0.481 | 0.578 | +0.097 |
+
+Remaining per-seed metrics (Static → Adaptive):
+
+| Seed | Precision | Recall | ROC-AUC | ΔROC-AUC |
+|---:|---|---|---|---:|
+| 42 (reference) | 0.440 → 0.497 | 0.608 → 0.647 | 0.875 → 0.889 | +0.014 |
+| 123 | 0.326 → 0.498 | 0.668 → 0.583 | 0.883 → 0.889 | +0.006 |
+| 456 | 0.361 → 0.483 | 0.644 → 0.635 | 0.870 → 0.887 | +0.017 |
+| 789 | 0.459 → 0.539 | 0.638 → 0.672 | 0.879 → 0.893 | +0.014 |
+| 2024 | 0.482 → 0.530 | 0.579 → 0.650 | 0.880 → 0.895 | +0.015 |
+
+Validation checkpoint selection per seed (validation PR-AUC, best epoch):
+seed 42 reference 0.864 (epoch 126); 123: 0.861 (38); 456: 0.872 (63);
+789: 0.865 (125); 2024: 0.872 (197).
+
+### Aggregate results across the five seeds (seed 42 = official reference)
+
+| Metric | Mean | Std | Median | Min | Max |
+|---|---:|---:|---:|---:|---:|
+| Static F1 | 0.494 | 0.042 | 0.510 | 0.438 | 0.534 |
+| Adaptive F1 | 0.566 | 0.025 | 0.562 | 0.537 | 0.598 |
+| **ΔF1** | **+0.072** | 0.020 | +0.064 | +0.052 | +0.099 |
+| Static PR-AUC | 0.462 | 0.041 | 0.479 | 0.411 | 0.511 |
+| Adaptive PR-AUC | 0.553 | 0.022 | 0.560 | 0.524 | 0.578 |
+| **ΔPR-AUC** | **+0.091** | 0.028 | +0.095 | +0.049 | +0.125 |
+
+Std is the sample standard deviation (n=5).
+
+**Across the five predefined seeds, Adaptive GraphSAGE improved over its
+matched Static GraphSAGE baseline in 5/5 seeds on F1 and 5/5 seeds on
+PR-AUC.** ROC-AUC also increased in all five seeds (+0.006 to +0.017). The
+smallest ΔF1 (+0.052) is the original seed-42 reference. With only five seeds
+this is descriptive evidence of a consistent direction and effect size, not a
+significance claim. Static F1 itself varies by about 0.10 across seeds
+(0.438 to 0.534), so a single-seed static number carries real uncertainty.
+
+### Temporal pattern (mean per-step ΔF1, Adaptive − Static)
+
+| Seed | t=35-42 | t=43-49 |
+|---:|---:|---:|
+| 42 (reference) | +0.066 | −0.002 |
+| 123 | +0.057 | −0.009 |
+| 456 | +0.068 | +0.008 |
+| 789 | +0.092 | −0.003 |
+| 2024 | +0.091 | −0.026 |
+| **Across seeds: mean ± std** | **+0.075 ± 0.016** (5/5 positive) | **−0.007 ± 0.012** (1/5 positive) |
+
+The observed improvement is concentrated in t=35-42 in every seed, while
+t=43-49 shows essentially no mean improvement, with mixed sign. **This is a
+descriptive pattern, not a causal claim.** The document does not claim that
+t=43 is a proven regime boundary or explain why the later period differs; the
+split at 43 is the same descriptive cut used in Phases 3, 4 and 6. Illicit
+prevalence in t=43-49 is low, so per-step F1 there is noisy.
+
+### Seed-42 reproducibility issue and the clean replicate
+
+The original Phase 5 grid built each model before `train_gcn` reseeded the
+random-number generator, so the selected seed-42 checkpoint (grid config 16 of
+16) started from the RNG state left by the previous configuration. That
+checkpoint therefore **cannot be recreated from a bare `seed=42`**. The
+original Phase 6 result (Static 0.510, Adaptive 0.562) remains the **official
+seed-42 reference** and is what the five-seed table above uses.
+
+To test continuity, the Phase 7 protocol (seed, then construct the model, then
+train) was also run from scratch for seed 42 as a separate replicate. It is
+reported here and is **not** substituted for the reference:
+
+| Seed-42 run | Static F1 | Adaptive F1 | ΔF1 | Static PR-AUC | Adaptive PR-AUC | Val PR-AUC |
+|---|---:|---:|---:|---:|---:|---:|
+| Phase 6 reference (official) | 0.510 | 0.562 | +0.052 | 0.430 | 0.524 | 0.864 |
+| Phase 7 clean replicate | 0.440 | 0.537 | +0.098 | 0.462 | 0.552 | 0.859 |
+
+The replicate does not reproduce the reference, so exact reproducibility of
+the original seed-42 numbers is not claimed. The two are different but equally
+valid seed-42 models. Adaptation improved the replicate as well (its mean ΔF1
+by period is +0.055 for t=35-42 and +0.009 for t=43-49). As a sensitivity
+check only, replacing the reference by the replicate would give a five-seed
+mean ΔF1 of +0.081 with 5/5 seeds improved; this substitution is not used in
+any headline number.
+
+### Secondary analysis: per-seed validation-F1 threshold (SECONDARY)
+
+The primary analysis stays at the fixed 0.898. As a clearly secondary
+sensitivity analysis, each seed's own validation-F1-maximizing threshold
+(selected on validation predictions only) was also applied:
+
+| Seed | Own threshold | Static F1 | Adaptive F1 | ΔF1 |
+|---:|---:|---:|---:|---:|
+| 42 (reference) | 0.898 | 0.510 | 0.562 | +0.052 |
+| 123 | 0.950 | 0.483 | 0.553 | +0.070 |
+| 456 | 0.941 | 0.482 | 0.566 | +0.085 |
+| 789 | 0.913 | 0.539 | 0.604 | +0.065 |
+| 2024 | 0.877 | 0.530 | 0.582 | +0.052 |
+
+Mean ΔF1 is +0.065 (std 0.014), positive in 5/5 seeds. This matches the
+direction of the primary analysis and is not used to change any primary
+conclusion. It does show that 0.898 is calibrated to the seed-42 model; other
+seeds' own thresholds range from 0.877 to 0.950.
+
+### Comparison with Random Forest
+
+Random Forest test F1 remains 0.790. Adaptive GraphSAGE averages 0.566
+(range 0.537 to 0.598), so Random Forest stays stronger on test F1 in every
+seed, by roughly 0.19 to 0.25. Adaptive GraphSAGE improves over its own static
+baseline but does not reach the Random Forest benchmark.
+
+### Integrity checks (all passed)
+
+- Static and Adaptive test populations are identical in every seed (same
+  `time_step` and `y_true` arrays, n=16,670) and identical across seeds.
+- t=35 predictions are bit-identical between Static and Adaptive in every seed,
+  confirming the adaptive run starts from the matched checkpoint.
+- No future labels are accessed (event-log check per seed); predictions are
+  deterministic and are not rewritten after later adaptation.
+- The primary analysis uses the fixed threshold 0.898; each seed's own
+  threshold, recomputed from its saved validation predictions, matches the
+  stored value, so no test data was involved.
+- The adaptation configuration is identical for every seed
+  (lr=0.001, grad_steps=1, k=1, no replay) and static training has no test
+  argument.
+- The seed set is exactly {42, 123, 456, 789, 2024}.
+- No Phase 1-6 tracked file was modified. Full suite: 80 tests passed
+  (55 existing + 25 new Phase 7 tests).
+
+### Limitations
+
+See `docs/LIMITATIONS.md` L4. In brief: only five seeds, a single dataset,
+a single main adaptive configuration, temporally ordered non-independent
+observations, the seed-42 initialization issue, and threshold sensitivity.
+No claim is made beyond the Elliptic dataset.

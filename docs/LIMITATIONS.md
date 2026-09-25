@@ -113,3 +113,45 @@ fact).
   per-step F1 there is noisy and often exactly 0 for both models.
 - **No replay** and no other adaptive mechanism was used; results describe
   this minimal online fine-tuning protocol only.
+
+---
+
+## L4 — Phase 7 (multi-seed robustness) limitations
+
+These apply to every Phase 7 result in `docs/EXPERIMENTS.md`, in addition to
+L2 (simulated feedback delay) and L3 (Phase 6 limitations).
+
+- **Only five seeds.** The seeds (42, 123, 456, 789, 2024) were predefined.
+  Five observations give a descriptive picture of direction, mean, spread and
+  range, not a precise estimate of run-to-run variance. Improvement in 5/5
+  seeds is not a proof of significance or of general reliability.
+- **Single dataset.** All results are on the original Elliptic Bitcoin
+  dataset with one fixed chronological split. No claim is made that they
+  generalize to other datasets, other time periods or real-world deployments.
+- **Single main adaptive configuration.** Every seed uses the configuration
+  selected in Phase 6 (lr=0.001, grad_steps=1, k=1, no replay), which was
+  chosen on five validation steps with a seed-42 model. Other adaptation
+  settings, and replay, were not examined across seeds.
+- **Temporally ordered, non-independent observations.** Per-step results
+  within a seed are temporally ordered and not independent, and seeds share
+  the same data and split. No pooled seed x time-step test was performed, and
+  none should be read into the numbers.
+- **Descriptive temporal pattern.** The concentration of improvement in
+  t=35-42 and its absence in t=43-49 is an observed pattern only. It is not a
+  causal explanation, and t=43 is not a proven regime boundary. Illicit
+  prevalence in t=43-49 is low, so per-step F1 there is noisy.
+- **Seed-42 initialization and reproducibility.** The original Phase 5 grid
+  constructed each model before `train_gcn` reseeded, so the official seed-42
+  checkpoint cannot be regenerated from a bare `seed=42`. A clean replicate
+  gave different numbers (Static F1 0.440, Adaptive F1 0.537 vs the
+  reference 0.510 / 0.562). The original Phase 6 result remains the official
+  reference, and exact reproducibility of it is not claimed.
+- **Threshold sensitivity.** The fixed threshold 0.898 was validation-tuned
+  for the seed-42 model, and other seeds' own validation thresholds range from
+  0.877 to 0.950. The secondary per-seed-threshold analysis agrees in
+  direction (5/5 seeds improved) but is secondary and does not replace the
+  primary fixed-threshold result.
+- **Simulated feedback delay and persistent Adam state** (L2, L3) still apply
+  to every seed.
+- **Random Forest remains stronger.** Adaptive GraphSAGE averages F1 0.566
+  against Random Forest's 0.790.
