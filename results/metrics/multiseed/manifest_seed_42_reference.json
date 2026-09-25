@@ -1,0 +1,30 @@
+{
+  "label": "seed_42_reference",
+  "seed": 42,
+  "architecture": "SAGEConv(165,128) -> ReLU -> Dropout(0.5) -> SAGEConv(128,1)",
+  "hyperparameters": {
+    "hidden": 128,
+    "dropout": 0.5,
+    "lr": 0.01,
+    "weight_decay": 0.0005,
+    "epochs": 200
+  },
+  "checkpoint_selection_criterion": "best validation PR-AUC (30-34) over 200 epochs, via train_gcn (unchanged)",
+  "fixed_threshold_primary": 0.898,
+  "adaptation_config": {
+    "lr": 0.001,
+    "grad_steps": 1,
+    "k": 1,
+    "replay": false,
+    "selection": "none (fixed Phase 6 configuration; not retuned per seed)"
+  },
+  "test_population_size": 16670,
+  "pos_weight_fixed_from_train": 8.1887845993042,
+  "source": "existing Phase 5/6 artifacts (read-only, not retrained)",
+  "static_checkpoint": "results/models/gnn_improvement_selected.pt",
+  "static_test_predictions": "results/metrics/predictions/gnn_improvement_test.npz",
+  "adaptive_test_predictions": "results/metrics/predictions/adaptive_graphsage_test.npz",
+  "own_validation_threshold": 0.8980084657669067,
+  "best_validation_epoch": 126,
+  "validation_pr_auc": 0.8640109410713819
+}
