@@ -1,0 +1,103 @@
+{
+  "test_period_touched": false,
+  "test_range": [
+    35,
+    49
+  ],
+  "folds": [
+    {
+      "name": "fold1",
+      "train_start": 1,
+      "train_end": 19,
+      "val_start": 20,
+      "val_end": 24
+    },
+    {
+      "name": "fold2",
+      "train_start": 1,
+      "train_end": 24,
+      "val_start": 25,
+      "val_end": 29
+    },
+    {
+      "name": "fold3",
+      "train_start": 1,
+      "train_end": 29,
+      "val_start": 30,
+      "val_end": 34
+    }
+  ],
+  "e1_mlp": {
+    "architecture": "165 -> 128 -> 1, ReLU, Dropout(0.5)",
+    "hyperparameters": {
+      "lr": 0.01,
+      "weight_decay": 0.0005,
+      "epochs": 200
+    },
+    "seeds": [
+      42,
+      123,
+      456
+    ],
+    "n_runs": 9,
+    "per_fold_val_pr_auc": [
+      {
+        "fold": "fold1",
+        "mean": 0.7622432903453601,
+        "std": 0.007048878127802044,
+        "min": 0.7555776249885363,
+        "max": 0.7696212882705493
+      },
+      {
+        "fold": "fold2",
+        "mean": 0.9389610477787412,
+        "std": 0.0060037212573630875,
+        "min": 0.9352513323067735,
+        "max": 0.9458877076869214
+      },
+      {
+        "fold": "fold3",
+        "mean": 0.892865878040299,
+        "std": 0.0054458366012205975,
+        "min": 0.8873356361755234,
+        "max": 0.8982231901259404
+      }
+    ],
+    "overall_val_pr_auc_mean": 0.8646900720548002,
+    "overall_val_pr_auc_std": 0.07956677059064053,
+    "overall_val_f1_mean": 0.8458776126367871,
+    "wall_time_seconds": 130.9
+  },
+  "e2_trees": {
+    "seeds": [
+      42,
+      123,
+      456,
+      789,
+      2024
+    ],
+    "n_rf_configs": 16,
+    "n_hgb_configs": 16,
+    "n_runs": 480,
+    "best_random_forest_config": {
+      "config_index": 8,
+      "max_depth": 24,
+      "min_samples_leaf": 1,
+      "max_features": "sqrt",
+      "n_estimators": 300,
+      "mean_val_pr_auc": 0.9481505598739567,
+      "std_val_pr_auc": 0.0617600890444516
+    },
+    "best_hist_gradient_boosting_config": {
+      "config_index": 2,
+      "max_depth": null,
+      "learning_rate": 0.1,
+      "max_iter": 100,
+      "min_samples_leaf": 50,
+      "mean_val_pr_auc": 0.9504594141819207,
+      "std_val_pr_auc": 0.05740056360829845
+    },
+    "wall_time_seconds": 8246.1
+  },
+  "note": "Selection metric is mean validation PR-AUC across folds/seeds. No configuration was selected using, or evaluated on, t=35-49."
+}
