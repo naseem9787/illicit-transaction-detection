@@ -1,0 +1,152 @@
+{
+  "test_period_touched": false,
+  "test_range": [
+    35,
+    49
+  ],
+  "folds": [
+    {
+      "name": "fold1",
+      "train_start": 1,
+      "train_end": 19,
+      "val_start": 20,
+      "val_end": 24
+    },
+    {
+      "name": "fold2",
+      "train_start": 1,
+      "train_end": 24,
+      "val_start": 25,
+      "val_end": 29
+    },
+    {
+      "name": "fold3",
+      "train_start": 1,
+      "train_end": 29,
+      "val_start": 30,
+      "val_end": 34
+    }
+  ],
+  "seeds": [
+    42,
+    123,
+    456
+  ],
+  "architecture_settings": {
+    "hidden": 128,
+    "dropout": 0.5,
+    "lr": 0.01,
+    "epochs": 200
+  },
+  "n_runs": 27,
+  "per_architecture_overall": [
+    {
+      "architecture": "direction_aware_graphsage",
+      "mean": 0.9016933462327335,
+      "std": 0.09272329093020779,
+      "min": 0.7771856457446708,
+      "max": 0.9765668869408646
+    },
+    {
+      "architecture": "plain_graphsage",
+      "mean": 0.8595753912859403,
+      "std": 0.0927566808435626,
+      "min": 0.7461965414224283,
+      "max": 0.9677779291274383
+    },
+    {
+      "architecture": "symmetrized_graphsage",
+      "mean": 0.8937645917008048,
+      "std": 0.09863238941462417,
+      "min": 0.7560289972464632,
+      "max": 0.9779730491344021
+    }
+  ],
+  "per_architecture_per_fold": [
+    {
+      "architecture": "direction_aware_graphsage",
+      "fold": "fold1",
+      "val_pr_auc_mean": 0.7788160149946951,
+      "val_pr_auc_std": 0.0021590762307952963,
+      "val_f1_mean": 0.7422930845020632,
+      "val_f1_std": 0.006091656643803312
+    },
+    {
+      "architecture": "direction_aware_graphsage",
+      "fold": "fold2",
+      "val_pr_auc_mean": 0.9748326329292762,
+      "val_pr_auc_std": 0.0016202960144210683,
+      "val_f1_mean": 0.9276300363058855,
+      "val_f1_std": 0.0014717818302192893
+    },
+    {
+      "architecture": "direction_aware_graphsage",
+      "fold": "fold3",
+      "val_pr_auc_mean": 0.9514313907742289,
+      "val_pr_auc_std": 0.00021784434085305604,
+      "val_f1_mean": 0.8997609455715088,
+      "val_f1_std": 0.003528770754427715
+    },
+    {
+      "architecture": "plain_graphsage",
+      "fold": "fold1",
+      "val_pr_auc_mean": 0.7502950502500285,
+      "val_pr_auc_std": 0.004174105388324901,
+      "val_f1_mean": 0.7201775600941857,
+      "val_f1_std": 0.0018964448455609311
+    },
+    {
+      "architecture": "plain_graphsage",
+      "fold": "fold2",
+      "val_pr_auc_mean": 0.9641144106751037,
+      "val_pr_auc_std": 0.0031731565559526605,
+      "val_f1_mean": 0.9176103307741283,
+      "val_f1_std": 0.004990630891445756
+    },
+    {
+      "architecture": "plain_graphsage",
+      "fold": "fold3",
+      "val_pr_auc_mean": 0.8643167129326884,
+      "val_pr_auc_std": 0.006935115142537512,
+      "val_f1_mean": 0.8477363722788356,
+      "val_f1_std": 0.007030892918030896
+    },
+    {
+      "architecture": "symmetrized_graphsage",
+      "fold": "fold1",
+      "val_pr_auc_mean": 0.7640737287145822,
+      "val_pr_auc_std": 0.007157109591132396,
+      "val_f1_mean": 0.7258305148784608,
+      "val_f1_std": 0.00571165163154943
+    },
+    {
+      "architecture": "symmetrized_graphsage",
+      "fold": "fold2",
+      "val_pr_auc_mean": 0.9768413777903343,
+      "val_pr_auc_std": 0.0017327829663676556,
+      "val_f1_mean": 0.9378863027447933,
+      "val_f1_std": 0.00219773061942444
+    },
+    {
+      "architecture": "symmetrized_graphsage",
+      "fold": "fold3",
+      "val_pr_auc_mean": 0.9403786685974976,
+      "val_pr_auc_std": 0.004201127352650275,
+      "val_f1_mean": 0.8946586083446685,
+      "val_f1_std": 0.002663142682062895
+    }
+  ],
+  "plain_graphsage_baseline_mean_val_pr_auc": 0.8595753912859403,
+  "deltas_vs_plain_baseline": {
+    "symmetrized_graphsage": {
+      "mean_val_pr_auc": 0.8937645917008048,
+      "delta_vs_plain": 0.03418920041486451
+    },
+    "direction_aware_graphsage": {
+      "mean_val_pr_auc": 0.9016933462327335,
+      "delta_vs_plain": 0.04211795494679316
+    }
+  },
+  "wall_time_seconds": 4257.5,
+  "note": "Selection metric is mean validation PR-AUC across folds/seeds. No configuration was selected using, or evaluated on, t=35-49."
+}
