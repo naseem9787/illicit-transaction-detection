@@ -1,0 +1,136 @@
+{
+  "test_period_touched": false,
+  "test_range": [
+    35,
+    49
+  ],
+  "base_hgb_config": {
+    "max_depth": null,
+    "learning_rate": 0.1,
+    "max_iter": 100,
+    "min_samples_leaf": 50
+  },
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    2024
+  ],
+  "folds": [
+    {
+      "name": "fold1",
+      "train_start": 1,
+      "train_end": 19,
+      "val_start": 20,
+      "val_end": 24
+    },
+    {
+      "name": "fold2",
+      "train_start": 1,
+      "train_end": 24,
+      "val_start": 25,
+      "val_end": 29
+    },
+    {
+      "name": "fold3",
+      "train_start": 1,
+      "train_end": 29,
+      "val_start": 30,
+      "val_end": 34
+    }
+  ],
+  "n_original_features": 165,
+  "n_graph_features": 334,
+  "n_augmented_features": 499,
+  "graph_feature_names_prefix": [
+    "in_degree",
+    "out_degree",
+    "total_degree",
+    "two_hop_reach"
+  ],
+  "n_runs": 30,
+  "baseline_165_mean_val_pr_auc": 0.9504594141819207,
+  "baseline_165_std_val_pr_auc": 0.05740056360829844,
+  "graph_augmented_mean_val_pr_auc": 0.9482671682420103,
+  "graph_augmented_std_val_pr_auc": 0.058840324553938395,
+  "absolute_improvement": -0.002192245939910409,
+  "baseline_165_mean_val_f1": 0.9204352120568281,
+  "graph_augmented_mean_val_f1": 0.9203070156750552,
+  "per_fold": {
+    "baseline_165__fold1": {
+      "val_pr_auc_mean": 0.8723880272412152,
+      "val_pr_auc_std": 0.00966279613518993,
+      "val_f1_mean": 0.8361484541005133
+    },
+    "baseline_165__fold2": {
+      "val_pr_auc_mean": 0.9879637501211592,
+      "val_pr_auc_std": 0.0015657874493395598,
+      "val_f1_mean": 0.9608645103813542
+    },
+    "baseline_165__fold3": {
+      "val_pr_auc_mean": 0.9910264651833872,
+      "val_pr_auc_std": 0.0013462036933997517,
+      "val_f1_mean": 0.9642926716886171
+    },
+    "graph_augmented__fold1": {
+      "val_pr_auc_mean": 0.8683958922041128,
+      "val_pr_auc_std": 0.011672282822705736,
+      "val_f1_mean": 0.8373868616983522
+    },
+    "graph_augmented__fold2": {
+      "val_pr_auc_mean": 0.9865683488264791,
+      "val_pr_auc_std": 0.0026222958705347426,
+      "val_f1_mean": 0.9588337236850963
+    },
+    "graph_augmented__fold3": {
+      "val_pr_auc_mean": 0.9898372636954388,
+      "val_pr_auc_std": 0.0025361679956951333,
+      "val_f1_mean": 0.9647004616417174
+    }
+  },
+  "per_seed": {
+    "baseline_165__seed42": {
+      "val_pr_auc_mean": 0.9552944685607706,
+      "val_f1_mean": 0.9235771036313193
+    },
+    "baseline_165__seed123": {
+      "val_pr_auc_mean": 0.948010604160438,
+      "val_f1_mean": 0.9179154215391071
+    },
+    "baseline_165__seed456": {
+      "val_pr_auc_mean": 0.9518328489625408,
+      "val_f1_mean": 0.9223787872151358
+    },
+    "baseline_165__seed789": {
+      "val_pr_auc_mean": 0.9512315375854977,
+      "val_f1_mean": 0.9208508015626601
+    },
+    "baseline_165__seed2024": {
+      "val_pr_auc_mean": 0.9459276116403559,
+      "val_f1_mean": 0.917453946335919
+    },
+    "graph_augmented__seed42": {
+      "val_pr_auc_mean": 0.9554218086053484,
+      "val_f1_mean": 0.9240485638951114
+    },
+    "graph_augmented__seed123": {
+      "val_pr_auc_mean": 0.9463208618482862,
+      "val_f1_mean": 0.9211934942227673
+    },
+    "graph_augmented__seed456": {
+      "val_pr_auc_mean": 0.9451904545006871,
+      "val_f1_mean": 0.9195683878949712
+    },
+    "graph_augmented__seed789": {
+      "val_pr_auc_mean": 0.9491433237511789,
+      "val_f1_mean": 0.9193434382147956
+    },
+    "graph_augmented__seed2024": {
+      "val_pr_auc_mean": 0.9452593925045504,
+      "val_f1_mean": 0.9173811941476311
+    }
+  },
+  "wall_time_seconds": 1218.3,
+  "note": "Selection metric is mean validation PR-AUC across folds/seeds. No configuration was selected using, or evaluated on, t=35-49."
+}

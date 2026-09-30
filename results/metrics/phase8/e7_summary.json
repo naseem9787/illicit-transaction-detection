@@ -1,0 +1,149 @@
+{
+  "test_period_touched": false,
+  "test_range": [
+    35,
+    49
+  ],
+  "base_hgb_config": {
+    "max_depth": null,
+    "learning_rate": 0.1,
+    "max_iter": 100,
+    "min_samples_leaf": 50
+  },
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    2024
+  ],
+  "alphas": [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5
+  ],
+  "depths": [
+    1,
+    2
+  ],
+  "n_runs": 195,
+  "baseline_mean_val_pr_auc": 0.9504594141819207,
+  "baseline_per_fold": {
+    "fold1": {
+      "val_pr_auc_mean": 0.8723880272412152,
+      "val_pr_auc_std": 0.00966279613518993,
+      "val_f1_mean": 0.8361484541005133
+    },
+    "fold2": {
+      "val_pr_auc_mean": 0.9879637501211592,
+      "val_pr_auc_std": 0.0015657874493395598,
+      "val_f1_mean": 0.9608645103813542
+    },
+    "fold3": {
+      "val_pr_auc_mean": 0.9910264651833872,
+      "val_pr_auc_std": 0.0013462036933997517,
+      "val_f1_mean": 0.9642926716886171
+    }
+  },
+  "grid_ranked_by_mean_val_pr_auc": [
+    {
+      "alpha": 0.0,
+      "depth": 1,
+      "mean": 0.9504594141819207,
+      "std": 0.05740056360829845
+    },
+    {
+      "alpha": 0.0,
+      "depth": 2,
+      "mean": 0.9504594141819207,
+      "std": 0.05740056360829845
+    },
+    {
+      "alpha": 0.1,
+      "depth": 1,
+      "mean": 0.9468561452756585,
+      "std": 0.06476240208106925
+    },
+    {
+      "alpha": 0.1,
+      "depth": 2,
+      "mean": 0.9439271342326053,
+      "std": 0.06742775127831098
+    },
+    {
+      "alpha": 0.2,
+      "depth": 1,
+      "mean": 0.9434730716541766,
+      "std": 0.06763750639074416
+    },
+    {
+      "alpha": 0.3,
+      "depth": 1,
+      "mean": 0.9394813854486831,
+      "std": 0.07071613156967331
+    },
+    {
+      "alpha": 0.2,
+      "depth": 2,
+      "mean": 0.9380201861189653,
+      "std": 0.07228818146102643
+    },
+    {
+      "alpha": 0.4,
+      "depth": 1,
+      "mean": 0.9344403513201504,
+      "std": 0.07293515081411966
+    },
+    {
+      "alpha": 0.3,
+      "depth": 2,
+      "mean": 0.9315376112018846,
+      "std": 0.07454876583162827
+    },
+    {
+      "alpha": 0.5,
+      "depth": 1,
+      "mean": 0.9220398371120335,
+      "std": 0.07419763071054512
+    },
+    {
+      "alpha": 0.4,
+      "depth": 2,
+      "mean": 0.8911191352173203,
+      "std": 0.07321130216930785
+    },
+    {
+      "alpha": 0.5,
+      "depth": 2,
+      "mean": 0.8603159943190914,
+      "std": 0.08540216693825381
+    }
+  ],
+  "best_alpha": 0.0,
+  "best_depth": 1,
+  "best_mean_val_pr_auc": 0.9504594141819207,
+  "absolute_improvement_vs_baseline": 0.0,
+  "best_config_per_fold": {
+    "fold1": {
+      "val_pr_auc_mean": 0.8723880272412152,
+      "val_pr_auc_std": 0.00966279613518993,
+      "val_f1_mean": 0.8361484541005133
+    },
+    "fold2": {
+      "val_pr_auc_mean": 0.9879637501211592,
+      "val_pr_auc_std": 0.0015657874493395598,
+      "val_f1_mean": 0.9608645103813542
+    },
+    "fold3": {
+      "val_pr_auc_mean": 0.9910264651833872,
+      "val_pr_auc_std": 0.0013462036933997517,
+      "val_f1_mean": 0.9642926716886171
+    }
+  },
+  "alpha0_exactly_matches_baseline_max_abs_diff": 0.0,
+  "wall_time_seconds": 284.1,
+  "note": "Selection metric is mean validation PR-AUC across folds/seeds. No configuration was selected using, or evaluated on, t=35-49."
+}
