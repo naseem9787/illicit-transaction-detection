@@ -585,6 +585,104 @@ scripts.
 
 ---
 
+## Phase 5 — Controlled static GNN improvement study
+
+### Purpose
+
+Determine whether the basic GCN's weak performance (test F1 0.390) was
+primarily an architecture/training-setup limitation, by controlled
+comparison against a small, pre-declared grid of alternatives — not an
+open-ended architecture search.
+
+### Protocol
+
+Existing data protocol held fixed: same chronological split, same
+unknown-label exclusion, same seed (42), same checkpoint-selection
+criterion (validation PR-AUC) and threshold-selection criterion
+(validation F1, frozen before test). Test was not inspected for model or
+hyperparameter selection.
+
+Two model families, each swept over a small grid — 2 hidden sizes (64,
+128) × 2 dropout rates (0.2, 0.5) × 2 learning rates (0.003, 0.01) = 8
+configurations per family, 16 total:
+
+- **Tuned GCN**: the same `GCNConv → ReLU → Dropout → GCNConv` architecture
+  as Phase 3, with hidden size/dropout/lr swept.
+- **GraphSAGE**: `SAGEConv → ReLU → Dropout → SAGEConv`, same grid.
+
+All 16 configurations were trained with `src/training/gnn_training.py::
+train_gcn` (Phase 3's function, unmodified — it is architecture-agnostic
+despite its name) at a fixed 200-epoch budget, matching the Phase 3
+reference exactly so the comparison isn't confounded by a shorter
+training budget for the new configurations. The single overall winner
+across all 16 was selected by validation PR-AUC alone; test data was
+never touched for any of the 15 non-winning configurations — not even for
+reporting — so there was no way to select a "best test configuration."
+
+### Validation results (all 16 configurations)
+
+| Architecture | Hidden | Dropout | LR | Best Epoch | Val PR-AUC | Val F1 |
+|---|---:|---:|---:|---:|---:|---:|
+| tuned_gcn | 64 | 0.2 | 0.003 | 194 | 0.7476 | 0.7403 |
+| tuned_gcn | 64 | 0.2 | 0.01 | 150 | 0.7826 | 0.7870 |
+| tuned_gcn | 64 | 0.5 | 0.003 | 200 | 0.6971 | 0.7456 |
+| tuned_gcn | 64 | 0.5 | 0.01 | 194 | 0.7760 | 0.7944 |
+| tuned_gcn | 128 | 0.2 | 0.003 | 200 | 0.7402 | 0.7478 |
+| tuned_gcn | 128 | 0.2 | 0.01 | 191 | 0.8000 | 0.7557 |
+| tuned_gcn | 128 | 0.5 | 0.003 | 199 | 0.7319 | 0.7594 |
+| tuned_gcn | 128 | 0.5 | 0.01 | 188 | 0.7937 | 0.7884 |
+| graphsage | 64 | 0.2 | 0.003 | 83 | 0.8614 | 0.8449 |
+| graphsage | 64 | 0.2 | 0.01 | 64 | 0.8611 | 0.8464 |
+| graphsage | 64 | 0.5 | 0.003 | 87 | 0.8122 | 0.8177 |
+| graphsage | 64 | 0.5 | 0.01 | 47 | 0.7979 | 0.8161 |
+| graphsage | 128 | 0.2 | 0.003 | 77 | 0.8438 | 0.8272 |
+| graphsage | 128 | 0.2 | 0.01 | 40 | 0.8401 | 0.8303 |
+| graphsage | 128 | 0.5 | 0.003 | 68 | 0.8554 | 0.8496 |
+| **graphsage** | **128** | **0.5** | **0.01** | **126** | **0.8640** | **0.8718** |
+
+Every GraphSAGE config outperformed every tuned-GCN config on validation
+PR-AUC — evidence that the convolution operator, not just hyperparameters,
+was the more consequential factor. **Selected: GraphSAGE, hidden=128,
+dropout=0.5, lr=0.01** (validation PR-AUC 0.8640, threshold 0.8980,
+selected on validation F1). This checkpoint became the base model for
+Phases 6, 7, and Phase 8's E3/direction-aware work.
+
+### Test results (35–49), frozen threshold 0.898
+
+| Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.202 | 0.813 | 0.323 | 0.856 | 0.209 |
+| Random Forest | 0.926 | 0.689 | 0.790 | 0.936 | 0.787 |
+| Basic GCN (Phase 3) | 0.306 | 0.536 | 0.390 | 0.808 | 0.265 |
+| **Selected GraphSAGE** | 0.440 | 0.608 | **0.510** | 0.875 | 0.430 |
+
+Confusion matrix: TN=14748, FP=839, FN=425, TP=658.
+
+**Answer to the Phase 5 question:** the architecture/training-setup change
+closes part of the gap to Random Forest (F1 0.390→0.510, and all
+threshold-independent metrics improved too, so this isn't a threshold
+artifact) but does not close it — Random Forest remains well ahead on
+every metric. The basic GCN's weakness was **partly, not primarily**, an
+architecture/training-setup problem.
+
+### Temporal consistency vs. Basic GCN
+
+11 of 15 test time steps improved, 2 got worse, 2 unchanged. Mean F1
+delta: +0.103 for t=35–42, +0.006 for t=43–49 — same pattern seen in every
+later phase: gains concentrate in the earlier, calmer test period.
+
+### Files
+
+`src/models/graphsage.py`, `scripts/train_gnn_improvement.py`,
+`scripts/evaluate_gnn_improvement.py`, `tests/test_gnn_improvement.py`.
+Outputs: `results/models/gnn_improvement_selected.pt`,
+`results/metrics/gnn_improvement_{train_manifest,results}.json`,
+`results/metrics/predictions/gnn_improvement_{val,test}.npz`,
+`results/metrics/temporal_gnn_improvement*.csv`. No Phase 1–4 file was
+modified.
+
+---
+
 ## Phase 6 — Adaptive GraphSAGE (delayed-feedback online adaptation on the Phase 5 static model)
 
 ### Research question
@@ -931,3 +1029,200 @@ See `docs/LIMITATIONS.md` L4. In brief: only five seeds, a single dataset,
 a single main adaptive configuration, temporally ordered non-independent
 observations, the seed-42 initialization issue, and threshold sensitivity.
 No claim is made beyond the Elliptic dataset.
+
+---
+
+## Phase 8 — Diagnostics: why do the GNNs trail Random Forest?
+
+### Purpose
+
+Phases 3–7 established that every GNN variant, static or adaptive, trails
+Random Forest (test F1 0.790) by a wide margin. Phase 8 does not chase a
+higher number — it investigates *why*, through four small, hypothesis-
+driven, pre-declared diagnostic experiments, all evaluated under a
+stricter rolling-origin validation protocol (§ below) and none touching
+the test period. Every experiment answers one specific question; none is
+an open-ended architecture or hyperparameter search.
+
+### Rolling-origin validation protocol
+
+Introduced specifically for Phase 8 because the fixed split gives only one
+validation window (5 time steps). Three chronological folds, each
+strictly earlier than the next, none reaching the test period:
+
+```
+fold 1: train 1–19,  validate 20–24
+fold 2: train 1–24,  validate 25–29
+fold 3: train 1–29,  validate 30–34   (identical to the original fixed split)
+```
+
+`src/training/rolling_origin.py::ROLLING_ORIGIN_FOLDS` and `TEST_RANGE`
+are the single source of truth, reused unchanged by every Phase 8
+experiment; `TEST_RANGE` is enforced with a runtime assertion that refuses
+to build any data range reaching t=35, not just documented as a rule.
+
+### E1 — Feature-only MLP control
+
+**Question:** is the GNN family's weakness "neural networks underperform
+trees on this tabular data" or "the graph specifically isn't helping" —
+these are different claims and need to be separated.
+
+165→128→1 MLP, `ReLU`, `Dropout(0.5)`, same training conventions as the
+GraphSAGE grid (Adam lr=0.01, weight_decay=5e-4, 200 epochs, checkpoint by
+validation PR-AUC), 3 seeds (42, 123, 456) × 3 folds.
+
+| Fold | Val PR-AUC (mean ± std) | Val F1 (mean ± std) |
+|---|---:|---:|
+| fold1 | 0.762 ± 0.007 | 0.739 ± 0.003 |
+| fold2 | 0.939 ± 0.006 | 0.918 ± 0.001 |
+| fold3 | 0.893 ± 0.005 | 0.881 ± 0.005 |
+
+**Answer:** even a plain feature-only MLP (no graph at all) trails the
+tuned trees substantially on the same folds (E2 below: trees reach ~0.95
+mean val PR-AUC). This is evidence that neural-network-vs-tree is at
+least part of the gap — separate from, and prior to, any question about
+graph structure.
+
+### E2 — Equal-budget tree benchmark
+
+**Question:** is the Random Forest baseline (Phase 2's 3-config shallow
+search) a fair comparison target, or an under-tuned strawman?
+
+Random Forest (16 predeclared configs: `max_depth` ∈ {8,16,24,None},
+`min_samples_leaf` ∈ {1,5}, `max_features` ∈ {sqrt,log2}, `n_estimators` ∈
+{200,300}) and HistGradientBoostingClassifier (16 predeclared configs:
+`max_depth` ∈ {None,6,10}, `learning_rate` ∈ {0.05,0.1,0.2}, `max_iter` ∈
+{100,200}, `min_samples_leaf` ∈ {20,50}), 5 seeds, same 3 folds.
+
+| Model | Best config | Mean val PR-AUC |
+|---|---|---:|
+| Random Forest | max_depth=24, min_samples_leaf=1, max_features=sqrt, n_estimators=300 | 0.948 |
+| **HistGradientBoosting** | **max_depth=None, learning_rate=0.1, max_iter=100, min_samples_leaf=50** | **0.950** |
+
+**Answer:** yes, the tree benchmark is fair — a proper tuning pass over
+both tree families lands within 0.003 PR-AUC of Phase 2's original RF
+selection, confirming Phase 2's shallow search wasn't accidentally
+under-tuned relative to what a larger budget finds. HistGradientBoosting's
+selected config became the frozen base model for E5 and E7 below.
+
+### E3 — Direction-aware graph aggregation
+
+**Question:** does the raw, one-directional edge orientation throw away
+usable structural signal?
+
+PyG's `SAGEConv` aggregates only from a node's incoming neighbors under
+the raw `edge_index`; outgoing neighbors never contribute a message. Two
+variants tested against a plain-GraphSAGE control (Phase 5's architecture,
+unmodified), same 128-hidden/0.5-dropout/0.01-lr settings, 3 seeds × 3
+folds:
+
+- **Symmetrized**: both `SAGEConv` layers see the union of edges and
+  their reverse.
+- **Direction-aware**: separate `SAGEConv` branches for incoming and
+  outgoing neighbors (each 64-dim, concatenated to 128 to match the
+  baseline's hidden width), output layer over symmetrized edges.
+
+| Architecture | Mean val PR-AUC | Δ vs. plain |
+|---|---:|---:|
+| Plain GraphSAGE (control) | 0.860 | — |
+| Symmetrized | 0.894 | +0.034 |
+| **Direction-aware** | **0.902** | **+0.042** |
+
+Both variants beat the control in **all 3 folds**, not just on average.
+fold3 (identical train/val range to every earlier phase) shows the
+largest gain: plain 0.864 → direction-aware 0.951.
+
+**Answer:** yes — how a GNN uses the graph matters. This is the strongest
+positive signal in Phase 8, and it has **not yet been evaluated on the
+test period** — see `docs/LIMITATIONS.md` L5 for why that evaluation was
+deliberately deferred rather than skipped.
+
+### E5 — Tree + engineered graph features
+
+**Question:** does adding explicit, label-free graph-derived features to
+the *strongest* model (E2's HistGradientBoosting) help?
+
+334 predeclared features appended to the original 165 (499 total): in/out/
+total degree, 2-hop reach, and 165-dim mean feature vectors over incoming
+and outgoing neighbors separately — computed per snapshot, never using
+labels, never crossing time steps. Same frozen HGB config as E2, 5 seeds
+× 3 folds, condition A (165 features) vs. condition B (499 features).
+
+| Condition | Mean val PR-AUC | Mean val F1 |
+|---|---:|---:|
+| Baseline (165 features) | 0.9505 | 0.9204 |
+| Graph-augmented (499 features) | 0.9483 | 0.9203 |
+| **Δ** | **−0.0022** | **−0.0001** |
+
+Consistent small decline across all 3 folds and 4 of 5 seeds — small
+relative to the ~0.058 seed-to-seed standard deviation, so the honest
+reading is "no measurable benefit," not "actively harmful."
+
+**Answer:** no. A plausible, unverified explanation: the released features
+f94–f165 are documented, by external convention this project cannot
+verify against the raw file, as already being one-hop aggregated neighbor
+features — if so, the 334 new columns may mostly duplicate information
+the tree already had, adding dimensionality without new signal.
+
+### E7 — Graph-score smoothing
+
+**Question:** can post-hoc blending of a tree's predictions with its
+neighbors' predictions improve the strongest tabular model?
+
+`smoothed = (1-α)·tree_score + α·mean(neighbor tree_scores)`, over both
+incoming and outgoing neighbors (never labels), at α ∈ {0, 0.1, ..., 0.5}
+and propagation depth ∈ {1, 2}. Same frozen HGB config and folds/seeds as
+E5.
+
+| α | Depth=1 mean val PR-AUC |
+|---:|---:|
+| **0.0 (no smoothing)** | **0.9505** |
+| 0.1 | 0.9469 |
+| 0.2 | 0.9435 |
+| 0.3 | 0.9395 |
+| 0.4 | 0.9344 |
+| 0.5 | 0.9220 |
+
+Monotonically worse as α increases; depth=2 is uniformly worse than
+depth=1 at every matching α. **Best configuration: no smoothing at all.**
+
+**Answer:** no. Two of the two folds with near-saturated baseline PR-AUC
+(fold2, fold3) show a marginal gain at α=0.1 before declining — a genuine
+but small nuance, well within noise, that does not change the selection.
+
+### Synthesis: the strongest defensible conclusion
+
+E1, E5, and E7 together support: **naive, post-hoc or feature-level
+incorporation of graph information does not improve an already-strong
+tabular classifier on this dataset.** E3 shows the opposite is *not* true
+for how a GNN itself processes the graph internally — direction-aware
+message passing measurably helps a GNN, on validation. These are two
+different, both-true findings; neither should be generalized into the
+other. In particular, this project does **not** conclude that "graph-based
+message passing combined with adaptation provides a superior modeling
+pathway" — the adaptive GNN family still trails Random Forest by a wide
+margin (§ Phase 6/7 above), and no experiment here demonstrates that graph
+information beats what the strongest tabular model already achieves.
+
+### Leakage verification
+
+Every Phase 8 module enforces the test-period boundary structurally
+(`TEST_RANGE` assertions in `rolling_origin.py`, `rolling_origin_graph.py`,
+`graph_smoothing.py`, `graph_features.py`), not just by convention. No
+test-period prediction file exists anywhere under
+`results/metrics/predictions/` for E1, E2, E3, E5, or E7 — confirmed
+directly, not assumed. 64 dedicated tests across
+`tests/test_phase8_*.py` cover: no cross-time features/smoothing, no
+label usage in any graph-derived feature or smoothing computation, correct
+incoming/outgoing directional handling, deterministic behavior, and
+correct handling of isolated (no-neighbor) nodes.
+
+### Files
+
+`src/models/mlp.py`, `src/models/graphsage_directional.py`,
+`src/training/rolling_origin.py`, `src/training/rolling_origin_graph.py`,
+`src/training/graph_smoothing.py`, `src/training/graph_features.py`,
+`scripts/run_phase8_diagnostics.py`, `scripts/run_phase8_e3_diagnostics.py`,
+`scripts/run_phase8_e5_diagnostics.py`, `scripts/run_phase8_e7_diagnostics.py`,
+`tests/test_phase8_*.py`. Outputs: `results/metrics/phase8/*.json`,
+`results/metrics/phase8/*.csv`. No Phase 1–7 file was modified.

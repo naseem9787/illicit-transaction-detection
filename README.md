@@ -1,10 +1,58 @@
 # Illicit Transaction Detection Using Graph-Based Adaptive Learning
 
 Elliptic Bitcoin dataset, illicit-transaction / AML-oriented detection.
-Status: **Phase 1 (data pipeline) complete and verified.** GNN and adaptive
-mechanism not yet implemented — see `docs/DECISIONS.md` D4 for why the
-adaptive mechanism's design changed from the original brief once the data
-was actually inspected.
+
+**Status: Phases 1–8 complete.** This is an empirical investigation, not a
+novel-algorithm paper: it studies whether graph-based learning and a
+delayed-feedback online-adaptation protocol improve illicit transaction
+detection on this dataset relative to a strong tabular baseline, under a
+strictly chronological evaluation protocol. The adaptive mechanism is
+**online fine-tuning on newly revealed labels** — not reinforcement
+learning or meta-learning. See `docs/METHODOLOGY.md` for the full write-up
+and `docs/LIMITATIONS.md` for what this project does and does not claim.
+
+## Research question
+
+> Can adaptive graph-based learning improve illicit transaction detection
+> when transaction patterns change over time?
+
+Tested via a chronological train/validation/test split (never shuffled),
+a static-vs-adaptive comparison at matched architecture/weights, and a
+5-seed robustness check — see `docs/EXPERIMENTS.md` for the full story.
+
+## Key results (test set, time steps 35–49)
+
+| Model | Precision | Recall | F1 | ROC-AUC | PR-AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.202 | 0.811 | 0.324 | 0.857 | 0.210 |
+| **Random Forest** | **0.926** | 0.689 | **0.790** | **0.936** | **0.787** |
+| Basic GCN | 0.306 | 0.536 | 0.390 | 0.808 | 0.265 |
+| Adaptive GCN | 0.389 | 0.529 | 0.448 | 0.829 | 0.310 |
+| Static GraphSAGE | 0.440 | 0.608 | 0.510 | 0.875 | 0.430 |
+| Adaptive GraphSAGE | 0.497 | 0.647 | 0.562 | 0.889 | 0.524 |
+| Adaptive GraphSAGE (5-seed mean) | — | — | 0.566 ± 0.025 | — | 0.553 ± 0.022 |
+
+**Random Forest remains the strongest model on test F1.** This project
+does not claim otherwise, and does not treat that as a failure — see
+"What this project does and does not claim" below and
+`docs/EXPERIMENTS.md` for why. The finding of interest is that Adaptive
+GraphSAGE improves consistently over its static counterpart (5/5 seeds, on
+both F1 and PR-AUC), and that three independent attempts to add graph
+information to the *stronger* tabular model (an MLP control, engineered
+graph features, and graph-score smoothing — all under `docs/EXPERIMENTS.md`
+Phase 8) did not help — a genuine, reported negative-result pattern, not a
+gap in the write-up.
+
+## What this project does and does not claim
+
+- **Does claim:** a working, leakage-safe chronological pipeline; a
+  reproducible online-adaptation protocol with a consistent, multi-seed
+  gain over a matched static GNN; and an honest empirical picture of where
+  graph information does and doesn't help on this dataset.
+- **Does not claim:** a novel algorithm, state-of-the-art performance,
+  beating Random Forest, real-time deployment readiness, a real (as
+  opposed to simulated) feedback-delay assumption, or generalization
+  beyond the Elliptic dataset. See `docs/LIMITATIONS.md`.
 
 ## Setup
 
@@ -21,108 +69,81 @@ data/raw/elliptic_bitcoin_dataset/elliptic_txs_edgelist.csv
 data/raw/elliptic_bitcoin_dataset/elliptic_txs_features.csv
 ```
 
-## Phase 1 — data pipeline
-
-Run the full pipeline (load → validate → preprocess → chronological split →
-per-time-step graph construction → EDA figures):
-
-```bash
-python3 -m scripts.audit_dataset --config config.yaml
-```
-
-Run the Phase 1 data-pipeline tests (11 tests, all currently passing
-against the real files):
-
-```bash
-python3 -m pytest tests/test_data.py -v
-```
-
-### Outputs
-
-- `data/processed/node_table_meta.csv` — txId, time_step, label, time_split,
-  is_labeled (one row per transaction)
-- `data/processed/node_features.npz` — the 165-d feature matrix, row order
-  matching `node_table_meta.csv`
-- `data/processed/snapshot_summary.csv` — per-time-step node/edge/label counts
-- `data/processed/audit_summary.json` — machine-readable run summary
-  (validation report, split config, split counts, timing)
-- `results/figures/class_distribution.png`
-- `results/figures/illicit_rate_over_time.png`
-
-## Phase 2 — classical ML baselines
-
-Train, then evaluate (separate scripts so predictions are cached and
-re-evaluation doesn't require retraining):
-
-```bash
-python3 -m scripts.train_baselines --config config.yaml
-python3 -m scripts.evaluate_baselines --config config.yaml
-```
-
-### Outputs
-
-- `results/models/*.joblib` — trained Logistic Regression / Random Forest models
-- `results/metrics/predictions/*.npz` — raw probabilities per model/split
-- `results/metrics/train_run_manifest.json` — model configs, seeds, timing
-- `results/metrics/baseline_results.json` — val/test metrics, thresholds
-- `results/metrics/temporal_*.csv` — per-time-step test metrics
-- `results/figures/baseline_metric_comparison.png`, `f1_over_time_logreg.png`,
-  `f1_over_time_random_forest.png`, `pr_curves.png`, `roc_curves.png`,
-  `confusion_matrix_best.png`
-
-Full results and interpretation in `docs/EXPERIMENTS.md`.
-
-Run the Phase 2 baseline tests (5 tests; these read the processed cache
-and Phase 2 outputs above, so run `train_baselines.py` first if
-`data/processed/` or `results/` are missing):
-
-```bash
-python3 -m pytest tests/test_baselines.py -v
-```
-
-Run the full test suite (16 tests total, all currently passing against
-the real dataset and the generated Phase 1/Phase 2 outputs):
+Run the full test suite (127 tests, all currently passing):
 
 ```bash
 python3 -m pytest tests/ -v
 ```
 
+## Dataset
+
+203,769 transaction nodes, 234,355 directed edges, 49 time steps, 165
+anonymized numeric features per node. Labels: 4,545 illicit, 42,019 licit,
+157,205 unknown (excluded from loss/metrics throughout). Edges never cross
+time steps — the graph is 49 structurally independent snapshots, not one
+temporal graph. Full structural audit in `docs/DATA_AUDIT.md`.
+
+## Chronological split (fixed throughout every phase)
+
+```
+Train:      time steps 1–29
+Validation: time steps 30–34
+Test:       time steps 35–49
+```
+
+Test is touched exactly once per model family, only after
+validation-only model/hyperparameter/threshold selection is frozen.
+
 ## Project structure
 
 ```
-config.yaml                 all paths/split/seed config — no hard-coded paths in code
-src/data/loader.py          load + validate raw CSVs
-src/data/preprocessing.py   label encoding, chronological split, leakage checks
-src/data/graph_builder.py   per-time-step snapshot construction (numpy, PyG-compatible field names)
-src/data/dataset.py         load Phase 1 processed cache for ML consumption
-src/baselines/              Logistic Regression, Random Forest
-src/evaluation/metrics.py           binary classification metrics, threshold selection
-src/evaluation/temporal_metrics.py  per-time-step metrics
-scripts/audit_dataset.py    Phase 1 CLI entry point
-scripts/train_baselines.py  Phase 2 training entry point
-scripts/evaluate_baselines.py  Phase 2 evaluation entry point
-tests/test_data.py          Phase 1 pytest suite, runs against the real dataset
-tests/test_baselines.py     Phase 2 pytest suite, runs against the processed cache + Phase 2 outputs
-docs/DATA_AUDIT.md          full structural audit of the dataset
-docs/DECISIONS.md           design-decision log with rationale
-docs/LIMITATIONS.md         dataset-level caveats that no amount of code can resolve
+config.yaml                      all paths/split/seed config
+
+src/data/                        Phase 1: loading, validation, chronological split, graph construction
+src/baselines/                   Phase 2: Logistic Regression, Random Forest
+src/models/                      GCN, GraphSAGE, direction-aware GraphSAGE variants, MLP control
+src/training/gnn_training.py     Phase 3 training/checkpointing (reused unchanged through Phase 7)
+src/training/adaptive_gnn.py     Phase 4 delayed-feedback walk-forward protocol (reused through Phase 6/7)
+src/training/adaptive_graphsage.py   Phase 6 model-factory wrapper around the Phase 4 protocol
+src/training/rolling_origin*.py  Phase 8 rolling-origin validation (folds, tree grids, graph batches)
+src/training/graph_smoothing.py  Phase 8 E7: graph-score smoothing of tree predictions
+src/training/graph_features.py   Phase 8 E5: engineered graph features for trees
+src/evaluation/                  metrics, validation-only threshold selection, per-time-step breakdown
+
+scripts/audit_dataset.py             Phase 1 CLI entry point
+scripts/train_baselines.py, evaluate_baselines.py            Phase 2
+scripts/train_gnn.py, evaluate_gnn.py                        Phase 3 (basic GCN)
+scripts/train_adaptive_gnn.py, evaluate_adaptive_gnn.py      Phase 4 (adaptive GCN)
+scripts/train_gnn_improvement.py, evaluate_gnn_improvement.py Phase 5 (GraphSAGE selection)
+scripts/train_adaptive_graphsage.py, evaluate_adaptive_graphsage.py  Phase 6
+scripts/train_multiseed_robustness.py, evaluate_multiseed_robustness.py  Phase 7
+scripts/run_phase8_diagnostics.py       Phase 8 E1 (MLP) + E2 (tree benchmark)
+scripts/run_phase8_e3_diagnostics.py    Phase 8 E3 (direction-aware GraphSAGE)
+scripts/run_phase8_e5_diagnostics.py    Phase 8 E5 (tree + graph features)
+scripts/run_phase8_e7_diagnostics.py    Phase 8 E7 (graph-score smoothing)
+
+tests/                           127 tests across all phases, run against real data/artifacts
 ```
 
 ## Documentation
 
-- `docs/DATA_AUDIT.md` — what's actually in the dataset, verified by code,
-  including why some of the originally proposed adaptive features (raw
-  amount, per-node history) are not computable from this data.
-- `docs/DECISIONS.md` — every non-obvious design choice and why.
-- `docs/EXPERIMENTS.md` — Phase 2 baseline results and interpretation
-  (filled in; kept in sync with `results/metrics/baseline_results.json`).
-- `docs/LIMITATIONS.md` — dataset-level caveats (e.g. unknown provenance of
-  the released feature standardization) that aren't fixable in code.
-- `docs/METHODOLOGY.md` — stub, to be filled in starting Phase 5.
+- `docs/DATA_AUDIT.md` — full structural audit of the dataset, including
+  why parts of the original adaptive-mechanism brief aren't computable
+  from this data (no persistent per-entity history is possible).
+- `docs/DECISIONS.md` — every non-obvious design choice and why (D1–D9).
+- `docs/METHODOLOGY.md` — the complete methodology: models, adaptive
+  protocol, threshold selection, validation design, and what "adaptive"
+  does and doesn't mean here.
+- `docs/EXPERIMENTS.md` — the full chronological experimental narrative,
+  Phase 2 through Phase 8, with every reported number traceable to a
+  saved result file.
+- `docs/LIMITATIONS.md` — dataset-level and methodological caveats,
+  including the simulated feedback delay and what is not yet controlled
+  for (see L5).
 
-## Next steps (not yet started)
+## Reproducing results
 
-Phase 3 (static GNN baseline — needs PyTorch, see `docs/DECISIONS.md` D6),
-Phase 4 (adaptive mechanism design, informed by the literature check +
-structural constraints already documented in `docs/DATA_AUDIT.md` and the
-temporal collapse observed in `docs/EXPERIMENTS.md`).
+Each phase's training/evaluation scripts write to `results/metrics/` and
+`results/figures/` without overwriting earlier phases' outputs — every
+phase's artifacts are still present and independently reproducible. See
+`docs/EXPERIMENTS.md` for the exact command for each phase.

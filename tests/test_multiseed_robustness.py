@@ -172,5 +172,11 @@ def test_phase1_to_6_tracked_files_unmodified():
         out = subprocess.run(["git", "diff", "--name-only", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
     except (subprocess.CalledProcessError, FileNotFoundError):
         pytest.skip("git unavailable")
-    changed = [p for p in out.splitlines() if p and "multiseed" not in p and not p.startswith("docs/")]
+    # docs/ and top-level README.md are project-wide documentation, legitimately
+    # updated as later phases complete — this test guards Phase 1-6 CODE and
+    # RESULT artifacts, not documentation prose.
+    changed = [
+        p for p in out.splitlines()
+        if p and "multiseed" not in p and not p.startswith("docs/") and p != "README.md"
+    ]
     assert changed == [], f"tracked Phase 1-6 files modified: {changed}"

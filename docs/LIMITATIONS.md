@@ -155,3 +155,37 @@ L2 (simulated feedback delay) and L3 (Phase 6 limitations).
   to every seed.
 - **Random Forest remains stronger.** Adaptive GraphSAGE averages F1 0.566
   against Random Forest's 0.790.
+
+---
+
+## L5 — Phase 8 diagnostics: open gaps
+
+These apply to `docs/EXPERIMENTS.md` Phase 8 and to the project's overall
+adaptive-learning claim.
+
+- **No adaptive-tree control exists yet.** Every adaptive result in this
+  project (Phases 4, 6, 7) compares an adaptive GNN against its *own*
+  static counterpart — never against a tabular model given the same
+  newly-revealed-label access. Without that control, "adaptation helps
+  the GNN" and "adaptation helps any model that gets new labels" are not
+  fully distinguished. This is the single most important open
+  methodological gap in the project's causal story, and is treated as
+  such rather than downplayed.
+- **Direction-aware GraphSAGE (E3) has not been evaluated on test.** It
+  shows a real, consistent validation gain (+0.042 mean PR-AUC over plain
+  GraphSAGE, all 3 folds) but that gain has not been checked against the
+  held-out period. No claim is made about its test performance one way or
+  the other.
+- **The E5/E7 negative results used one frozen tree configuration and one
+  fixed feature/smoothing design each.** They rule out the specific
+  formulations tested (a fixed mean-neighbor blend; a fixed set of
+  degree/2-hop/neighbor-mean features), not every conceivable way graph
+  information could be incorporated into a tree.
+- **The explanation offered for E5/E7's negative results (feature
+  redundancy with f94–f165) is a plausible hypothesis, not a verified
+  fact** — `docs/DATA_AUDIT.md` §8 already flags that the 94/72 local/
+  aggregated feature-column split is an external, unverified-against-the-
+  raw-file convention.
+- **Rolling-origin validation adds more evidence per decision but is still
+  bounded.** Three folds is more robust than one validation window, but
+  is still a small number of chronological splits from a single dataset.
