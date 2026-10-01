@@ -1,0 +1,224 @@
+{
+  "test_period_touched": false,
+  "test_range": [
+    35,
+    49
+  ],
+  "base_hgb_config": {
+    "max_depth": null,
+    "learning_rate": 0.1,
+    "max_iter": 100,
+    "min_samples_leaf": 50
+  },
+  "feedback_delay_k": 1,
+  "iters_per_update": 10,
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    2024
+  ],
+  "folds": [
+    {
+      "name": "fold1",
+      "train_start": 1,
+      "train_end": 19,
+      "val_start": 20,
+      "val_end": 24
+    },
+    {
+      "name": "fold2",
+      "train_start": 1,
+      "train_end": 24,
+      "val_start": 25,
+      "val_end": 29
+    },
+    {
+      "name": "fold3",
+      "train_start": 1,
+      "train_end": 29,
+      "val_start": 30,
+      "val_end": 34
+    }
+  ],
+  "n_runs": 30,
+  "static_mean_val_pr_auc": 0.9504594141819207,
+  "static_std_val_pr_auc": 0.05740056360829844,
+  "adaptive_mean_val_pr_auc": 0.9409379014595445,
+  "adaptive_std_val_pr_auc": 0.049144103695538344,
+  "absolute_improvement_pr_auc": -0.009521512722376224,
+  "static_mean_val_f1": 0.9204352120568281,
+  "adaptive_mean_val_f1": 0.9029069017832618,
+  "absolute_improvement_f1": -0.017528310273566272,
+  "n_folds_seeds_improved_pr_auc": 4,
+  "n_folds_seeds_total": 15,
+  "per_fold": {
+    "adaptive__fold1": {
+      "val_pr_auc_mean": 0.8774548952231079,
+      "val_pr_auc_std": 0.028286336092807833,
+      "val_f1_mean": 0.8364159869638955
+    },
+    "adaptive__fold2": {
+      "val_pr_auc_mean": 0.9699150050563997,
+      "val_pr_auc_std": 0.004498864549795301,
+      "val_f1_mean": 0.9322412393489465
+    },
+    "adaptive__fold3": {
+      "val_pr_auc_mean": 0.9754438040991256,
+      "val_pr_auc_std": 0.0075575288968354045,
+      "val_f1_mean": 0.9400634790369434
+    },
+    "static__fold1": {
+      "val_pr_auc_mean": 0.8723880272412152,
+      "val_pr_auc_std": 0.00966279613518993,
+      "val_f1_mean": 0.8361484541005133
+    },
+    "static__fold2": {
+      "val_pr_auc_mean": 0.9879637501211592,
+      "val_pr_auc_std": 0.0015657874493395598,
+      "val_f1_mean": 0.9608645103813542
+    },
+    "static__fold3": {
+      "val_pr_auc_mean": 0.9910264651833872,
+      "val_pr_auc_std": 0.0013462036933997517,
+      "val_f1_mean": 0.9642926716886171
+    }
+  },
+  "per_seed": {
+    "adaptive__seed42": {
+      "val_pr_auc_mean": 0.926242929053228,
+      "val_f1_mean": 0.9062056542353151
+    },
+    "adaptive__seed123": {
+      "val_pr_auc_mean": 0.9465480080712166,
+      "val_f1_mean": 0.9190854573180877
+    },
+    "adaptive__seed456": {
+      "val_pr_auc_mean": 0.9432495037317375,
+      "val_f1_mean": 0.8865418206206209
+    },
+    "adaptive__seed789": {
+      "val_pr_auc_mean": 0.9476063409337231,
+      "val_f1_mean": 0.9013259429111509
+    },
+    "adaptive__seed2024": {
+      "val_pr_auc_mean": 0.9410427255078168,
+      "val_f1_mean": 0.9013756338311348
+    },
+    "static__seed42": {
+      "val_pr_auc_mean": 0.9552944685607706,
+      "val_f1_mean": 0.9235771036313193
+    },
+    "static__seed123": {
+      "val_pr_auc_mean": 0.948010604160438,
+      "val_f1_mean": 0.9179154215391071
+    },
+    "static__seed456": {
+      "val_pr_auc_mean": 0.9518328489625408,
+      "val_f1_mean": 0.9223787872151358
+    },
+    "static__seed789": {
+      "val_pr_auc_mean": 0.9512315375854977,
+      "val_f1_mean": 0.9208508015626601
+    },
+    "static__seed2024": {
+      "val_pr_auc_mean": 0.9459276116403559,
+      "val_f1_mean": 0.917453946335919
+    }
+  },
+  "paired_deltas": [
+    {
+      "fold": "fold1",
+      "seed": 42,
+      "delta_pr_auc": -0.05554660115299681,
+      "delta_f1": -0.00628436763550666
+    },
+    {
+      "fold": "fold1",
+      "seed": 123,
+      "delta_pr_auc": 0.016154001946722674,
+      "delta_f1": 0.0336076239690698
+    },
+    {
+      "fold": "fold1",
+      "seed": 456,
+      "delta_pr_auc": 0.024481170181327117,
+      "delta_f1": -0.020703459372485855
+    },
+    {
+      "fold": "fold1",
+      "seed": 789,
+      "delta_pr_auc": 0.021699596202444327,
+      "delta_f1": -0.008661528450654266
+    },
+    {
+      "fold": "fold1",
+      "seed": 2024,
+      "delta_pr_auc": 0.018546172731965793,
+      "delta_f1": 0.0033793958064881613
+    },
+    {
+      "fold": "fold2",
+      "seed": 42,
+      "delta_pr_auc": -0.018517587342073982,
+      "delta_f1": -0.027880849309420808
+    },
+    {
+      "fold": "fold2",
+      "seed": 123,
+      "delta_pr_auc": -0.010634494155216778,
+      "delta_f1": -0.01799012782893583
+    },
+    {
+      "fold": "fold2",
+      "seed": 456,
+      "delta_pr_auc": -0.02399096608213014,
+      "delta_f1": -0.041630068567765965
+    },
+    {
+      "fold": "fold2",
+      "seed": 789,
+      "delta_pr_auc": -0.021421057374512276,
+      "delta_f1": -0.03244603185299988
+    },
+    {
+      "fold": "fold2",
+      "seed": 2024,
+      "delta_pr_auc": -0.01567962036986492,
+      "delta_f1": -0.02316927760291554
+    },
+    {
+      "fold": "fold3",
+      "seed": 42,
+      "delta_pr_auc": -0.013090430027556943,
+      "delta_f1": -0.017949131243084948
+    },
+    {
+      "fold": "fold3",
+      "seed": 123,
+      "delta_pr_auc": -0.009907296059170068,
+      "delta_f1": -0.012107388803192287
+    },
+    {
+      "fold": "fold3",
+      "seed": 456,
+      "delta_pr_auc": -0.026240239791607056,
+      "delta_f1": -0.045177371843292624
+    },
+    {
+      "fold": "fold3",
+      "seed": 789,
+      "delta_pr_auc": -0.011154128783255945,
+      "delta_f1": -0.017467015650873385
+    },
+    {
+      "fold": "fold3",
+      "seed": 2024,
+      "delta_pr_auc": -0.017521210759718464,
+      "delta_f1": -0.028445055717924994
+    }
+  ],
+  "wall_time_seconds": 562.9,
+  "note": "Validation-only control. No configuration was selected using, or evaluated on, t=35-49. This experiment does not select a final model \u2014 it informs interpretation of the adaptive GNN result."
+}
