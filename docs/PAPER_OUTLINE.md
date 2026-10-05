@@ -37,11 +37,24 @@ protocol.
 
 ## 2. Related work (from the Lab 7 literature review)
 
-- Elliptic dataset and its original benchmark (Weber et al. 2019): Random
-  Forest strong, GCN weaker.
-- GCN, GraphSAGE; temporal GNNs for Elliptic (cite from
-  `Lab7_Literature_Review.pdf`; verify every citation before submission).
-- Concept drift and online learning in fraud detection.
+References are taken from `Lab7_Literature_Review.pdf` (seven papers, APA):
+
+- Weber et al. (2019), Elliptic dataset and benchmark: a plain GCN did not
+  clearly beat a random-forest baseline. Our results agree for the static
+  setting.
+- Breiman (2001), Random forests: the strong tabular baseline.
+- Kipf & Welling (2017), GCN; Hamilton, Ying & Leskovec (2017), GraphSAGE:
+  the two graph models compared.
+- Pareja et al. (2020), EvolveGCN: the dynamic-graph motivation; we did not
+  implement it and used simpler online fine-tuning instead.
+- Kirkpatrick et al. (2017), Elastic Weight Consolidation: background for the
+  forgetting risk of online adaptation (we used no replay or regularizer).
+- Fey & Lenssen (2019), PyTorch Geometric: the graph library used.
+
+Stated research gap: static models are trained once and evaluated later, and
+dynamic models do not model when real labels arrive; we test simple
+delayed-feedback fine-tuning of GraphSAGE under strictly chronological
+evaluation. Full APA entries are in the Lab 7 document.
 
 ## 3. Data
 
