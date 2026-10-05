@@ -302,19 +302,22 @@ misunderstanding-prone part of the project:
   still test the research question was preferred over a more complex one
   that would add uncontrolled variables to an already-careful leakage
   audit.
-- **Known open gap:** as of this document, there is no adaptive-tree
-  control — i.e., no check of whether a tree model, given the same
-  newly-revealed-label access as the adaptive GNN, would show a similar
-  gain. Without it, "adaptation helps the GNN" and "adaptation helps any
-  model given new labels" are not yet fully distinguished. See
-  `docs/LIMITATIONS.md` L5.
+- **Adaptive-tree control (partial):** the same walk-forward protocol was
+  applied to the strongest tree (HistGradientBoosting) using sklearn's
+  `warm_start` to add 10 boosting rounds per revealed snapshot, with class
+  weights fixed from the training split. On rolling-origin validation this
+  did not help the tree (−0.0095 mean PR-AUC). Because that control ran on
+  validation folds where the tree is near-saturated, it does not fully
+  isolate the test-period drift regime in which the GNN's gain appeared;
+  the like-for-like comparison is deferred to the single final test
+  evaluation. See `docs/EXPERIMENTS.md` and `docs/LIMITATIONS.md` L5.
 
 ## 14. Reproducibility
 
 Every result in `docs/EXPERIMENTS.md` is traceable to a specific file
 under `results/metrics/` or `results/figures/`, produced by a specific
 script under `scripts/`, using a specific seed or seed set stated in that
-phase's section. 127 tests (`tests/`) cover leakage-safety (chronological
+phase's section. 140 tests (`tests/`) cover leakage-safety (chronological
 ordering, no future-label access, no cross-snapshot edges), correctness
 (shapes, determinism, threshold behavior), and — where a specific
 methodological claim was made in this project's own history (e.g. "batching

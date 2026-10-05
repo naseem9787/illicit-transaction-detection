@@ -163,14 +163,22 @@ L2 (simulated feedback delay) and L3 (Phase 6 limitations).
 These apply to `docs/EXPERIMENTS.md` Phase 8 and to the project's overall
 adaptive-learning claim.
 
-- **No adaptive-tree control exists yet.** Every adaptive result in this
-  project (Phases 4, 6, 7) compares an adaptive GNN against its *own*
-  static counterpart — never against a tabular model given the same
-  newly-revealed-label access. Without that control, "adaptation helps
-  the GNN" and "adaptation helps any model that gets new labels" are not
-  fully distinguished. This is the single most important open
-  methodological gap in the project's causal story, and is treated as
-  such rather than downplayed.
+- **The adaptive-tree control is partial, not decisive.** An
+  adaptive-tree control now exists (`docs/EXPERIMENTS.md`, "Adaptive-tree
+  control and decision gate"): warm-start boosting on newly revealed
+  labels made HistGradientBoosting *worse* on rolling-origin validation
+  (−0.0095 mean PR-AUC; 4 of 15 fold×seed pairs improved). Three limits on
+  how much this proves: (1) it tests one cheap incremental mechanism, not
+  every way a tree could use new labels (e.g. retraining on train plus
+  revealed steps was not tried); (2) it ran on validation folds where the
+  static tree is near-saturated (PR-AUC ≈ 0.99 in folds 2–3), whereas the
+  GNN's adaptive gain was measured on the test period where the static
+  model has degraded — and on the *validation* walk, adaptation did not
+  beat static for either GNN either (Phases 4 and 6); (3) the one fold
+  with headroom (fold 1, static PR-AUC 0.872) is the only fold where
+  adaptation helped the tree on average. A like-for-like comparison
+  therefore requires the final test evaluation, where Adaptive HGB is a
+  predeclared context model.
 - **Direction-aware GraphSAGE (E3) has not been evaluated on test.** It
   shows a real, consistent validation gain (+0.042 mean PR-AUC over plain
   GraphSAGE, all 3 folds) but that gain has not been checked against the

@@ -1226,3 +1226,126 @@ correct handling of isolated (no-neighbor) nodes.
 `scripts/run_phase8_e5_diagnostics.py`, `scripts/run_phase8_e7_diagnostics.py`,
 `tests/test_phase8_*.py`. Outputs: `results/metrics/phase8/*.json`,
 `results/metrics/phase8/*.csv`. No Phase 1–7 file was modified.
+
+---
+
+## Adaptive-tree control and decision gate
+
+### Why this experiment exists
+
+Every adaptive result above (Phases 4, 6, 7) compares an adaptive GNN
+against its own static counterpart. None tested whether a strong
+*tabular* model shows a similar gain simply because it also receives newly
+revealed labels. Without that, "adaptation helps this GNN" and
+"giving any model new labels helps" are not separated. This is a control,
+not a new model family.
+
+### Design
+
+Base model: the exact E2-selected HistGradientBoosting configuration
+(`max_depth=None, learning_rate=0.1, max_iter=100, min_samples_leaf=50`),
+165 original features, same three rolling-origin folds, same five seeds
+(42, 123, 456, 789, 2024). Validation only; the test period is never built.
+
+Walk-forward protocol identical in ordering to the GNN protocol:
+`predict(t) → freeze → reveal labels(t) → adapt → predict(t+1)`, k=1.
+Static and Adaptive start from a deep copy of the *same* fitted ensemble.
+
+**Adaptation mechanism (deliberately the simplest sklearn-native option):**
+`HistGradientBoostingClassifier(warm_start=True)`; for each revealed
+snapshot, `max_iter` is increased by `iters_per_update = 10` and `.fit()`
+is called on that snapshot's labeled nodes only, which adds 10 boosting
+rounds fit to the new data on top of the existing ensemble. This was
+checked directly before use (tree count increases and held-out predictions
+change; it is not a no-op or a from-scratch refit). `iters_per_update` was
+fixed in advance and never tuned. Class weights are computed once from the
+training split and passed as a fixed `sample_weight` on every fit —
+sklearn's `class_weight="balanced"` cannot be used because it recomputes
+from whatever `y` each call receives, which for a single small snapshot is
+unstable (the same reason the GNN protocol fixes `pos_weight`).
+
+### Results (validation, 3 folds × 5 seeds)
+
+| Condition | Mean val PR-AUC | Std | Mean val F1 |
+|---|---:|---:|---:|
+| Static HGB | 0.9505 | 0.0574 | 0.9204 |
+| Adaptive HGB | 0.9409 | 0.0491 | 0.9029 |
+| Δ | −0.0095 | | −0.0175 |
+
+| Fold | Static | Adaptive | Δ |
+|---|---:|---:|---:|
+| fold1 (train 1–19) | 0.8724 | 0.8775 | +0.0051 |
+| fold2 (train 1–24) | 0.9880 | 0.9699 | −0.0181 |
+| fold3 (train 1–29) | 0.9910 | 0.9754 | −0.0156 |
+
+4 of 15 fold×seed pairs improved; every seed's fold-averaged mean declined.
+fold1, the only fold with a weaker baseline, is also the only fold where
+adaptation helped on average (4 of 5 seeds positive; seed 42 is a −0.056
+outlier). Folds 2 and 3 declined in all 5 seeds.
+
+### Decision gate: what this does and does not show
+
+**What it shows.** This cheap incremental-boosting adaptation does not
+help the strongest tabular model on validation, and on the near-saturated
+folds it measurably hurts. So the GNN's adaptive gain is not explained by
+a generic "any model improves when given new labels" effect, at least for
+this mechanism on this evidence.
+
+**What it does not show.** Three limits, stated rather than glossed:
+
+1. *One mechanism.* Warm-start boosting on a single small snapshot is one
+   way to adapt a tree. Retraining on train plus revealed steps, or
+   weighting recent data, were not tried and may behave differently.
+2. *Headroom confound.* The control ran on validation folds where the
+   static tree is near-saturated (PR-AUC ≈ 0.99 in folds 2–3). The GNN's
+   adaptive gain was measured on the test period, where the static GNN has
+   degraded sharply (GraphSAGE PR-AUC 0.864 on validation → 0.430 on
+   test). On the *validation* walk, adaptation did not beat static for
+   either GNN (Phase 4: best candidate 0.7601 vs static 0.7707; Phase 6:
+   0.8624 vs 0.8640). So validation is not the regime where the GNN's
+   gain appears, and a validation-only tree control cannot be treated as
+   like-for-like. The fold1 result (headroom → adaptation helps) is
+   consistent with a headroom explanation but does not prove it.
+3. *Static trees also degrade on test* (Random Forest ≈ 0.99 validation →
+   0.787 test PR-AUC), so a tree has headroom on test too and might
+   respond to adaptation there.
+
+**Classification against the predeclared cases.** This is between Case A
+(adaptive tree does not improve while the adaptive GNN does) and Case C
+(inconclusive). The direction supports A; the headroom confound means it
+cannot be claimed as decisive. The strongest defensible statement is:
+*this simple tree adaptation does not reproduce the GNN's adaptive gain on
+validation, and the like-for-like test comparison is deferred to the
+single final evaluation, where Adaptive HGB is included as a context
+model.*
+
+### Decision on direction-aware adaptive GraphSAGE (Step 4)
+
+**Not run.** Reasons:
+
+- The only stated justification was that it completes the graph-side
+  question using existing infrastructure. But the project's adaptation
+  protocol cannot be confirmed on validation (see limit 2): a validation
+  run would likely show roughly no adaptive gain, as in Phases 4 and 6,
+  and would not be an interpretable test of whether adaptation helps
+  under drift.
+- Direction-aware GraphSAGE already has a clean validation result (E3:
+  +0.042 mean PR-AUC over plain GraphSAGE, all three folds). That result
+  stands on its own.
+- Running it to chase a higher number is exactly what the project has
+  committed not to do.
+
+**What is lost by skipping:** direction-aware GraphSAGE, the project's
+strongest graph-side validation finding, will not be evaluated on the test
+period. This is recorded as a limitation (`docs/LIMITATIONS.md` L5), not
+hidden.
+
+### Files
+
+`src/training/adaptive_tree.py`, `scripts/run_adaptive_tree_control.py`,
+`tests/test_adaptive_tree_control.py` (13 tests: no future labels,
+chronological order, prediction immutability, determinism, adaptation only
+after feedback, static/adaptive identical before the first update, fixed
+class weights). Outputs:
+`results/metrics/phase8/adaptive_tree_control_{results.csv,summary.json}`.
+No Phase 1–8 result was modified.

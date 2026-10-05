@@ -69,7 +69,7 @@ data/raw/elliptic_bitcoin_dataset/elliptic_txs_edgelist.csv
 data/raw/elliptic_bitcoin_dataset/elliptic_txs_features.csv
 ```
 
-Run the full test suite (127 tests, all currently passing):
+Run the full test suite (140 tests, all currently passing):
 
 ```bash
 python3 -m pytest tests/ -v
@@ -108,6 +108,7 @@ src/training/adaptive_graphsage.py   Phase 6 model-factory wrapper around the Ph
 src/training/rolling_origin*.py  Phase 8 rolling-origin validation (folds, tree grids, graph batches)
 src/training/graph_smoothing.py  Phase 8 E7: graph-score smoothing of tree predictions
 src/training/graph_features.py   Phase 8 E5: engineered graph features for trees
+src/training/adaptive_tree.py    Adaptive-tree control (warm-start HGB under the delayed-feedback walk)
 src/evaluation/                  metrics, validation-only threshold selection, per-time-step breakdown
 
 scripts/audit_dataset.py             Phase 1 CLI entry point
@@ -121,8 +122,9 @@ scripts/run_phase8_diagnostics.py       Phase 8 E1 (MLP) + E2 (tree benchmark)
 scripts/run_phase8_e3_diagnostics.py    Phase 8 E3 (direction-aware GraphSAGE)
 scripts/run_phase8_e5_diagnostics.py    Phase 8 E5 (tree + graph features)
 scripts/run_phase8_e7_diagnostics.py    Phase 8 E7 (graph-score smoothing)
+scripts/run_adaptive_tree_control.py    Adaptive-tree control (validation only)
 
-tests/                           127 tests across all phases, run against real data/artifacts
+tests/                           140 tests across all phases, run against real data/artifacts
 ```
 
 ## Documentation
