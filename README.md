@@ -30,7 +30,15 @@ a static-vs-adaptive comparison at matched architecture/weights, and a
 | Adaptive GCN | 0.389 | 0.529 | 0.448 | 0.829 | 0.310 |
 | Static GraphSAGE | 0.440 | 0.608 | 0.510 | 0.875 | 0.430 |
 | Adaptive GraphSAGE | 0.497 | 0.647 | 0.562 | 0.889 | 0.524 |
+| Static GraphSAGE (5-seed mean) | — | — | 0.494 ± 0.042 | — | 0.462 ± 0.041 |
 | Adaptive GraphSAGE (5-seed mean) | — | — | 0.566 ± 0.025 | — | 0.553 ± 0.022 |
+| Static HGB (context, 5-seed mean) | 0.878 | 0.715 | 0.787 ± 0.021 | 0.939 | 0.795 ± 0.003 |
+| Adaptive HGB (context, 5-seed mean) | 0.348 | 0.734 | 0.469 ± 0.060 | 0.803 | 0.205 ± 0.037 |
+
+The final comparison and its protocol are in `docs/RESULTS.md` and
+`docs/FINAL_MODEL_PROTOCOL.md`. Adaptive HGB — the same delayed label
+feedback given to a boosted tree — made the tree **worse** (0/5 seeds
+improved); this negative result is reported, not hidden.
 
 **Random Forest remains the strongest model on test F1.** This project
 does not claim otherwise, and does not treat that as a failure — see
@@ -69,7 +77,7 @@ data/raw/elliptic_bitcoin_dataset/elliptic_txs_edgelist.csv
 data/raw/elliptic_bitcoin_dataset/elliptic_txs_features.csv
 ```
 
-Run the full test suite (140 tests, all currently passing):
+Run the full test suite (147 tests, all currently passing):
 
 ```bash
 python3 -m pytest tests/ -v
@@ -123,8 +131,9 @@ scripts/run_phase8_e3_diagnostics.py    Phase 8 E3 (direction-aware GraphSAGE)
 scripts/run_phase8_e5_diagnostics.py    Phase 8 E5 (tree + graph features)
 scripts/run_phase8_e7_diagnostics.py    Phase 8 E7 (graph-score smoothing)
 scripts/run_adaptive_tree_control.py    Adaptive-tree control (validation only)
+scripts/run_final_evaluation.py         Final consolidated test evaluation (run once)
 
-tests/                           140 tests across all phases, run against real data/artifacts
+tests/                           147 tests across all phases, run against real data/artifacts
 ```
 
 ## Documentation
@@ -141,7 +150,14 @@ tests/                           140 tests across all phases, run against real d
   saved result file.
 - `docs/LIMITATIONS.md` — dataset-level and methodological caveats,
   including the simulated feedback delay and what is not yet controlled
-  for (see L5).
+  for (see L5, L6).
+- `docs/FINAL_MODEL_PROTOCOL.md` — the frozen finalists, thresholds and
+  evaluation rules, written before the final test evaluation.
+- `docs/RESULTS.md` — the final results table and what it does and does
+  not show.
+- `docs/PAPER_OUTLINE.md`, `docs/PRESENTATION.md`, `docs/VIVA_QA.md` —
+  paper outline, 10-slide structure with 5/10-minute scripts, and viva
+  questions and answers.
 
 ## Reproducing results
 

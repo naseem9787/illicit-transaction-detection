@@ -197,3 +197,27 @@ adaptive-learning claim.
 - **Rolling-origin validation adds more evidence per decision but is still
   bounded.** Three folds is more robust than one validation window, but
   is still a small number of chronological splits from a single dataset.
+
+---
+
+## L6 — Final evaluation (Step 5)
+
+- **Test-set exposure.** LR, RF, GCN and GraphSAGE results on t = 35–49 were
+  first produced in Phases 3–7. All selection used validation only, but the
+  test period was looked at. The final table re-scores frozen predictions;
+  only HGB is a first-time test evaluation. "Evaluated once" applies to that
+  model, not the whole project.
+- **Adaptive HGB is one crude tree mechanism.** +10 warm-start boosting
+  rounds per revealed step at learning rate 0.1 is a much larger update than
+  the GNN's one step at 0.001. Its failure (F1 0.787 → 0.469) does not show
+  that trees cannot adapt, nor that GNNs adapt better. Retraining on train
+  plus revealed steps was not tried and the mechanism was not re-tuned after
+  seeing test.
+- **Validation walks under-predicted test behaviour** (−0.0095 vs −0.59
+  PR-AUC for the tree), so the validation-selected adaptation settings for
+  the GNNs carry the same risk. The explanations offered (snapshot
+  over-fitting, longer walk) are untested hypotheses.
+- **Variance is unavailable** for LR, RF and the seed-42 GraphSAGE rows
+  (single runs).
+- **Direction-aware GraphSAGE was never evaluated on test**, by decision
+  (Step 4 skipped).

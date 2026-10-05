@@ -1349,3 +1349,42 @@ after feedback, static/adaptive identical before the first update, fixed
 class weights). Outputs:
 `results/metrics/phase8/adaptive_tree_control_{results.csv,summary.json}`.
 No Phase 1–8 result was modified.
+
+
+---
+
+## Final evaluation (Step 5)
+
+Protocol frozen in `docs/FINAL_MODEL_PROTOCOL.md` (committed before the run).
+Script: `scripts/run_final_evaluation.py`; results:
+`results/metrics/final/{final_evaluation_results.json, final_comparison_table.csv,
+adaptive_hgb_per_seed.csv, temporal_final_f1.csv}`; figures:
+`results/figures/final_comparison.png`, `final_f1_over_time.png`.
+
+Logistic Regression, Random Forest, Static GraphSAGE and Adaptive GraphSAGE
+are re-scored from their stored Phase 3–7 test predictions at their frozen
+validation thresholds. Static HGB and Adaptive HGB are the only new test
+evaluation (5 seeds; threshold = max-F1 on validation of the static model,
+shared by both).
+
+| Model | F1 | PR-AUC |
+|---|---:|---:|
+| Logistic Regression | 0.324 | 0.210 |
+| Random Forest | 0.790 | 0.788 |
+| Static GraphSAGE (5 seeds) | 0.494 ± 0.042 | 0.462 ± 0.041 |
+| Adaptive GraphSAGE (5 seeds) | 0.566 ± 0.025 | 0.553 ± 0.022 |
+| Static HGB (5 seeds) | 0.787 ± 0.021 | 0.795 ± 0.003 |
+| Adaptive HGB (5 seeds) | 0.469 ± 0.060 | 0.205 ± 0.037 |
+
+Outcome for the predeclared context model: Adaptive HGB was worse than
+Static HGB in 5/5 seeds (mean ΔF1 −0.319, ΔPR-AUC −0.590). It is identical at
+t = 35 and degrades step by step (F1 at t = 41: 0.476 vs 0.947). The Step 2
+validation control had predicted only a mild effect (−0.0095 PR-AUC), so
+validation walks under-predicted the harm on the longer, drifting test walk
+(14 updates vs 4). No re-tuning followed; the mechanism (+10 boosting rounds
+per revealed step) is the one declared in Step 2. Interpretation and its
+limits are in `docs/RESULTS.md` §3.3. This resolves the "like-for-like
+comparison" gap flagged in L5: the generic claim "any model gains from
+revealed labels" is not supported, and the converse claim "graph models adapt
+better than trees" is also not established, because the two update sizes are
+not comparable.

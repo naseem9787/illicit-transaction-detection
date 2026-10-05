@@ -317,7 +317,7 @@ misunderstanding-prone part of the project:
 Every result in `docs/EXPERIMENTS.md` is traceable to a specific file
 under `results/metrics/` or `results/figures/`, produced by a specific
 script under `scripts/`, using a specific seed or seed set stated in that
-phase's section. 140 tests (`tests/`) cover leakage-safety (chronological
+phase's section. 147 tests (`tests/`) cover leakage-safety (chronological
 ordering, no future-label access, no cross-snapshot edges), correctness
 (shapes, determinism, threshold behavior), and — where a specific
 methodological claim was made in this project's own history (e.g. "batching
