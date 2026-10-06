@@ -109,8 +109,9 @@ fact).
   F1 differences (10 non-zero) that are temporally ordered rather than
   independent. It is descriptive supporting evidence, not evidence of
   generalization or proof of significance.
-- **Noisy later-period metrics.** Illicit prevalence in t=43-49 is low, so
-  per-step F1 there is noisy and often exactly 0 for both models.
+- **Noisy later-period metrics.** Illicit prevalence is low at t=43-47 (0.3-2.6%)
+  but not at t=48-49 (7.6%, 11.8%); per-step F1 is near 0 for both models
+  throughout, so the cause is not established.
 - **No replay** and no other adaptive mechanism was used; results describe
   this minimal online fine-tuning protocol only.
 
@@ -139,7 +140,8 @@ L2 (simulated feedback delay) and L3 (Phase 6 limitations).
 - **Descriptive temporal pattern.** The concentration of improvement in
   t=35-42 and its absence in t=43-49 is an observed pattern only. It is not a
   causal explanation, and t=43 is not a proven regime boundary. Illicit
-  prevalence in t=43-49 is low, so per-step F1 there is noisy.
+  prevalence is low at t=43-47 but not t=48-49; the near-zero per-step F1
+  throughout t=43-49 is not explained by prevalence alone.
 - **Seed-42 initialization and reproducibility.** The original Phase 5 grid
   constructed each model before `train_gcn` reseeded, so the official seed-42
   checkpoint cannot be regenerated from a bare `seed=42`. A clean replicate

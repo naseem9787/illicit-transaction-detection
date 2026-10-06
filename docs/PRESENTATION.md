@@ -22,29 +22,18 @@ list**:
 | **Adaptive GraphSAGE** | **the studied method (F1 0.566 ± 0.025)** |
 | Static / Adaptive HGB | context: does adaptation help a tree too? (0.787 → 0.469) |
 
-## Ten slides
+## The deck
 
-1. **Title and question.** Does adapting a graph model on newly revealed
-   labels help detect illicit Bitcoin transactions under drift?
-2. **Why it matters.** AML, drift, labels arrive late. Elliptic dataset facts.
-3. **Data and split.** 49 time steps, 165 features, train 1–29, val 30–34,
-   test 35–49; unknown labels excluded.
-4. **No-leakage pipeline.** Chronological split, thresholds from validation,
-   unknown labels never in loss or metrics, audits and tests (140+ tests).
-5. **Models.** Logistic Regression, Random Forest, GCN, GraphSAGE; why
-   GraphSAGE was chosen (beat GCN).
-6. **Adaptive protocol.** Diagram: predict t, freeze, reveal labels of t,
-   fine-tune, predict t+1. State clearly that the delay is simulated and the
-   mechanism is plain fine-tuning (not RL, not meta-learning).
-7. **Main result.** Table from `RESULTS.md` §2 with `final_comparison.png`.
-   Adaptive beats static in 5/5 seeds; Random Forest still far ahead.
-8. **Per-step view.** `final_f1_over_time.png`: gain is in t = 35–42, none
-   in t = 43–49.
-9. **Controls and negative results.** MLP, graph features, smoothing,
-   direction-aware (validation only), and Adaptive HGB collapsing
-   (0.787 → 0.469). Say it plainly.
-10. **Conclusions, limitations, future work.** Static trees win; adaptation is
-    modest and mechanism-specific; simulated delay; one dataset; future work.
+The finished PowerPoint is `presentation/Illicit_Transaction_Detection_Final_Presentation.pptx`
+(14 slides, native editable charts, speaker notes on every slide, a "Speaker A-D"
+tag on each slide to replace with your names).
+
+| Slides | Speaker | Content |
+|---|---|---|
+| 1 Cover, 2 Abstract, 3 Problem, 4 Data and split | A | question, summary numbers, drift and late labels, chronological split chart |
+| 5 Leakage-safe pipeline, 6 Adaptive protocol, 7 Finalists | B | safeguards and 147 tests, the predict-freeze-reveal-fine-tune loop, models |
+| 8 Results, 9 Per-seed gain, 10 Per-step F1 | C | final comparison chart, five-seed result, temporal pattern |
+| 11 Diagnostics, 12 Adaptive HGB, 13 Limitations and future work, 14 Conclusion | D | why trees win, the negative result, caveats, takeaways |
 
 ## 5-minute story (about 600 words of speech)
 
@@ -73,10 +62,10 @@ last column, so every examiner question has a named first responder.
 
 | Speaker | Slides | Time | Covers | Viva owner (`docs/VIVA_QA.md`) |
 |---|---|---|---|---|
-| **A** | 1-3 | 2.5 min | Question, why drift and late labels matter, Elliptic facts, chronological split, why unknown labels are excluded | Data, unknown labels, "is there leakage?", L1 |
-| **B** | 4-6 | 2.5 min | Leakage-safe pipeline and the 147 tests, baselines and GraphSAGE, the adaptive loop (draw it), the simulated delay, "this is plain fine-tuning, not RL or meta-learning" | "What is adaptive?", delay realism, thresholds, why GraphSAGE |
-| **C** | 7-8 | 2.5 min | Main results table, five-seed gain (0.494 to 0.566), per-step pattern (gain in t = 35-42), k = 3 sensitivity (F1 0.534) | Significance, seeds, "why does the gain vanish after t = 43?", seed-42 gap |
-| **D** | 9-10 | 2.5 min | Why Random Forest wins, MLP/graph-feature/smoothing negatives, Adaptive HGB failure and what it does and does not prove, limitations, future work | "Why RF beats you", "what is novel", adaptive HGB, test-set exposure |
+| **A** | 1-4 | 2.5 min | Question, why drift and late labels matter, Elliptic facts, chronological split, why unknown labels are excluded | Data, unknown labels, "is there leakage?", L1 |
+| **B** | 5-7 | 2.5 min | Leakage-safe pipeline and the 147 tests, baselines and GraphSAGE, the adaptive loop (draw it), the simulated delay, "this is plain fine-tuning, not RL or meta-learning" | "What is adaptive?", delay realism, thresholds, why GraphSAGE |
+| **C** | 8-10 | 2.5 min | Main results table, five-seed gain (0.494 to 0.566), per-step pattern (gain in t = 35-42), k = 3 sensitivity (F1 0.534) | Significance, seeds, "why does the gain vanish after t = 43?", seed-42 gap |
+| **D** | 11-14 | 2.5 min | Why Random Forest wins, MLP/graph-feature/smoothing negatives, Adaptive HGB failure and what it does and does not prove, limitations, future work | "Why RF beats you", "what is novel", adaptive HGB, test-set exposure |
 
 Hand-offs: A ends on "so how do we avoid cheating on time?" (B). B ends on
 the adaptive loop and "so does it help?" (C). C ends on "but Random Forest is

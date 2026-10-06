@@ -74,8 +74,10 @@ steps we do not claim significance. A Wilcoxon test on per-step differences
 (p ≈ 0.017, seed-42 only) is exploratory.
 
 **Why does the gain disappear after t = 43?**
-Observed pattern only. Illicit prevalence in t = 43–49 is very low, so
-per-step F1 is often exactly 0 for every model, including Random Forest.
+Observed pattern only. Illicit prevalence is very low at t = 43–47
+(0.3–2.6%) though not at t = 48–49 (7.6%, 11.8%), and per-step F1 is near 0 for
+every model, including Random Forest, so low prevalence alone does not explain
+it.
 We do not claim a regime boundary.
 
 ## Methodology questions

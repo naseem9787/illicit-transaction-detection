@@ -57,8 +57,9 @@ Figures: `results/figures/final_comparison.png`,
 
 Adaptive beat static in 5/5 seeds. The gain is concentrated in t = 35–42
 (mean per-step F1 change +0.066 in the seed-42 reference) and is absent in
-t = 43–49 (−0.002), where illicit prevalence is very low and per-step F1 is
-noisy. Under the Phase 6 sensitivity check with a 3-step delay the seed-42
+t = 43–49 (−0.002), where illicit prevalence is mostly very low (0.3–2.6% at
+t = 43–47, but 7.6% and 11.8% at t = 48–49) and every model, Random Forest
+included, scores near zero. Under the Phase 6 sensitivity check with a 3-step delay the seed-42
 F1 is 0.534. All of this is conditional on the simulated feedback delay.
 
 ### 3.2 Why Random Forest wins
