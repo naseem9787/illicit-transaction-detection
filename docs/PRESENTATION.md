@@ -66,19 +66,24 @@ feedback, it got worse, 0.787 to 0.469. So adaptation is not automatic, and
 our evidence is limited to one dataset and a simulated delay. The honest
 conclusion: on Elliptic, a static tree ensemble is the best detector.
 
-## 10-minute story (split across speakers)
+## 10-minute story (four speakers, about 2.5 minutes each)
 
-Suggested split for a team of three. Adjust names and slide ranges.
+Replace A-D with your names. Each speaker also owns the viva questions in the
+last column, so every examiner question has a named first responder.
 
-- **Speaker A (slides 1–4, about 3 min):** problem, drift, dataset, split,
-  leakage controls, why we exclude unknown labels, what the 147 tests cover.
-- **Speaker B (slides 5–8, about 4 min):** models, adaptive protocol (draw
-  the loop), main table, multi-seed result, per-step temporal pattern,
-  k = 3 sensitivity (F1 0.534).
-- **Speaker C (slides 9–10, about 3 min):** why Random Forest wins (features
-  already carry neighbour information, hypothesis), E1/E5/E7 negatives,
-  Adaptive HGB failure and what it does and does not prove, limitations,
-  future work.
+| Speaker | Slides | Time | Covers | Viva owner (`docs/VIVA_QA.md`) |
+|---|---|---|---|---|
+| **A** | 1-3 | 2.5 min | Question, why drift and late labels matter, Elliptic facts, chronological split, why unknown labels are excluded | Data, unknown labels, "is there leakage?", L1 |
+| **B** | 4-6 | 2.5 min | Leakage-safe pipeline and the 147 tests, baselines and GraphSAGE, the adaptive loop (draw it), the simulated delay, "this is plain fine-tuning, not RL or meta-learning" | "What is adaptive?", delay realism, thresholds, why GraphSAGE |
+| **C** | 7-8 | 2.5 min | Main results table, five-seed gain (0.494 to 0.566), per-step pattern (gain in t = 35-42), k = 3 sensitivity (F1 0.534) | Significance, seeds, "why does the gain vanish after t = 43?", seed-42 gap |
+| **D** | 9-10 | 2.5 min | Why Random Forest wins, MLP/graph-feature/smoothing negatives, Adaptive HGB failure and what it does and does not prove, limitations, future work | "Why RF beats you", "what is novel", adaptive HGB, test-set exposure |
+
+Hand-offs: A ends on "so how do we avoid cheating on time?" (B). B ends on
+the adaptive loop and "so does it help?" (C). C ends on "but Random Forest is
+still far ahead, why?" (D).
+
+Rehearse once with a timer; if over time, cut slide 8 detail (C) and the E1
+to E7 listing (D) first, never the limitations.
 
 ## Demo / backup material
 
